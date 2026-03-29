@@ -1,0 +1,23 @@
+= arithmetics-go
+:author: Pedro Lamarão <pedro.lamarao@purpura.dev.br>
+:icons: font
+
+Em link:README.pt.adoc[português].
+
+The `arithmetics-go` library contains procedures for arithmetics with "long" nonnegative integers.
+
+This is an educational project with the purpose of learning and sharing algorithmic mathematics.
+
+== References
+
+* Donald E. Knuth, "The Art of Computer Programming", volume 2, "Seminumerical Algorithms", third edition, ISBN 0-201-89684-2
+
+* MMIXmasters, "MIX to MMIX Conversion", https://mmix.cs.hm.edu/mmixmasters/index.html#MIXtoMMIX
+
+* Peter Montgomery, Torbjörn Granlund, "Division by Invariant Integers using Multiplication", PLDI '94, DOI: 10.1145/178243.178249
+
+* Alexander Stepanov, Paul McJones, "Elements of Programming", Addison-Wesley, 2009, ISBN 978-0-321-63537-2
+
+* Niels Möller, Torbjörn Granlund, "Improved division by invariant integers", IEEE Transactions on Computers, Volume 60, Issue 2, February 2011, DOI: 10.1109/TC.2010.143
+
+* Alexander Stepanov, Daniel Rose, "From Mathematics to Generic Programming", Addison Wesley, 2015, ISBN 978-0-321-94204-3
