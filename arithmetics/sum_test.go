@@ -51,10 +51,10 @@ func TestSum_ResultLessThanPart_Rapid(t *testing.T) {
 		rz := len(x) + len(y) + 1
 		r := make([]uint32, rz)
 		r[rz-1] = Sum32(r, x, y)
-		if IsLess(r, x) {
+		if IsLess32(r, x) {
 			t.Error("Sum(x,y) < x")
 		}
-		if IsLess(r, y) {
+		if IsLess32(r, y) {
 			t.Error("Sum(x,y) < y")
 		}
 	})

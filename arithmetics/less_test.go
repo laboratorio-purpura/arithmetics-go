@@ -4,33 +4,36 @@
 package arithmetics
 
 import (
+	"math/big"
 	"testing"
 
 	"pgregory.net/rapid"
 )
 
-func TestIsLess_ZeroNotLessThanZero_Rapid(t *testing.T) {
-	// test zero is not less than zero
+func TestIsLess_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		words := rapid.IntRange(0, 64).Draw(t, "words")
-		x := rapid.SliceOfN(rapid.UintMax(0), words, words).Draw(t, "x")
-		y := rapid.SliceOfN(rapid.UintMax(0), words, words).Draw(t, "y")
-		r := IsLess(x, y)
-		if r {
-			t.Error("IsLess(x,y) = true")
-		}
-	})
-}
+		x := rapid.SliceOf(rapid.Uint32()).Draw(t, "x")
+		y := rapid.SliceOf(rapid.Uint32()).Draw(t, "y")
+		r := IsLess32(x, y)
+		t.Logf("r = %v", r)
 
-func TestIsLess_ZeroLessThanNonzero_Rapid(t *testing.T) {
-	// test zero is less than nonzero
-	rapid.Check(t, func(t *rapid.T) {
-		words := rapid.IntRange(1, 64).Draw(t, "words")
-		x := rapid.SliceOfN(rapid.UintMax(0), words, words).Draw(t, "x")
-		y := rapid.SliceOfN(rapid.UintMin(1), words, words).Draw(t, "y")
-		r := IsLess(x, y)
-		if !r {
-			t.Error("IsLess(x,y) = false")
+		x_ := big.NewInt(0)
+		for i := len(x); i > 0; i-- {
+			x_.Lsh(x_, 32)
+			x_.Add(x_, big.NewInt(int64(x[i-1])))
+		}
+		t.Logf("x_ = %v", x_)
+		y_ := big.NewInt(0)
+		for i := len(y); i > 0; i-- {
+			y_.Lsh(y_, 32)
+			y_.Add(y_, big.NewInt(int64(y[i-1])))
+		}
+		t.Logf("y_ = %v", y_)
+		r_ := x_.Cmp(y_) < 0
+		t.Logf("r_ = %v", r_)
+
+		if r_ != r {
+			t.Errorf("r_ != r")
 		}
 	})
 }

@@ -33,11 +33,11 @@ func TestDifference32_ResultLessThanPart_Rapid(t *testing.T) {
 		r := make([]uint32, rz)
 		b := Difference32(r, x, y)
 		if b == 0 {
-			if IsMore(r, x) {
+			if IsMore32(r, x) {
 				t.Error("x >= y but Difference(x,y) > x")
 			}
 		} else {
-			if IsLess(r, x) {
+			if IsLess32(r, x) {
 				t.Error("x < y but Difference(x,y) < x")
 			}
 		}
