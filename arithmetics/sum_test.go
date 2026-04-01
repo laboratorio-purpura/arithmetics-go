@@ -10,15 +10,15 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestSum_Commutativity_Rapid(t *testing.T) {
+func TestAdd_Commutativity_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
 		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 		rz := len(x) + len(y)
 		r1 := make([]uint, rz)
-		c1 := Sum(r1, x, y)
+		c1 := Add(r1, x, y)
 		r2 := make([]uint, rz)
-		c2 := Sum(r2, y, x)
+		c2 := Add(r2, y, x)
 		if !slices.Equal(r1, r2) {
 			t.Error("Sum(x,y) != Sum(y,x)")
 		}
@@ -28,13 +28,13 @@ func TestSum_Commutativity_Rapid(t *testing.T) {
 	})
 }
 
-func TestSum_Identity_Rapid(t *testing.T) {
+func TestAdd_Identity_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
 		identity := rapid.SliceOf(rapid.Just[uint](0)).Draw(t, "identity")
 		rz := len(x) + len(identity)
 		r := make([]uint, rz)
-		c := Sum(r, x, identity)
+		c := Add(r, x, identity)
 		if !AreEqual(r, x) {
 			t.Error("Sum(x,identity) != x")
 		}
@@ -44,13 +44,13 @@ func TestSum_Identity_Rapid(t *testing.T) {
 	})
 }
 
-func TestSum_ResultLessThanPart_Rapid(t *testing.T) {
+func TestAdd_ResultLessThanPart_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		x := rapid.SliceOfN(rapid.UintMin(1), 1, -1).Draw(t, "x")
 		y := rapid.SliceOfN(rapid.UintMin(1), 1, -1).Draw(t, "y")
 		rz := len(x) + len(y) + 1
 		r := make([]uint, rz)
-		r[rz-1] = Sum(r, x, y)
+		r[rz-1] = Add(r, x, y)
 		if IsSmaller(r, x) {
 			t.Error("Sum(x,y) < x")
 		}

@@ -10,7 +10,7 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestDivision2By1WithReciprocal32_Differential_Rapid(t *testing.T) {
+func TestDivide2By1WithReciprocal32_Differential_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
 	rapid.Check(t, func(t *rapid.T) {
@@ -20,7 +20,7 @@ func TestDivision2By1WithReciprocal32_Differential_Rapid(t *testing.T) {
 		x := [2]uint{x0, x1}
 
 		iy := Reciprocal(y)
-		q, r := Division2By1WithReciprocal(x, y, iy)
+		q, r := Divide2By1WithReciprocal(x, y, iy)
 		t.Logf("q = %v, r = %v", q, r)
 
 		q_, r_ := bits.Div(x1, x0, y)
@@ -33,7 +33,7 @@ func TestDivision2By1WithReciprocal32_Differential_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivisionBy1WithReciprocal32_Definition_Rapid(t *testing.T) {
+func TestDivideBy1WithReciprocal32_Definition_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
 	rapid.Check(t, func(t *rapid.T) {
@@ -46,19 +46,19 @@ func TestDivisionBy1WithReciprocal32_Definition_Rapid(t *testing.T) {
 		iy := Reciprocal(y)
 
 		q := make([]uint, len(x))
-		r := DivisionBy1WithReciprocal(q, x, y, iy)
+		r := DivideBy1WithReciprocal(q, x, y, iy)
 		t.Logf("q = %v, r = %v", q, r)
 
 		x_ := make([]uint, len(x)+1)
-		Product(x_, []uint{y}, q)
-		Sum(x_, x_, []uint{r})
+		Multiply(x_, []uint{y}, q)
+		Add(x_, x_, []uint{r})
 		if NotEqual(x_, x[:]) {
 			t.Errorf("x_ = %v", x_)
 		}
 	})
 }
 
-func TestDivision3By2WithReciprocal32_Definition_Rapid(t *testing.T) {
+func TestDivide3By2WithReciprocal32_Definition_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
 	rapid.Check(t, func(t *rapid.T) {
@@ -71,12 +71,12 @@ func TestDivision3By2WithReciprocal32_Definition_Rapid(t *testing.T) {
 		x := [3]uint{x0, x1, x2}
 
 		iy := Reciprocal2(y)
-		q, r := Division3By2WithReciprocal(x, y, iy)
+		q, r := Divide3By2WithReciprocal(x, y, iy)
 		t.Logf("q = %v, r = %v", q, r)
 
 		x_ := make([]uint, 3)
-		Product(x_, y[:], []uint{q})
-		Sum(x_, x_, r[:])
+		Multiply(x_, y[:], []uint{q})
+		Add(x_, x_, r[:])
 		if NotEqual(x_, x[:]) {
 			t.Errorf("x_ = %v", x_)
 		}

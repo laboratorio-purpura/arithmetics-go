@@ -11,7 +11,7 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestIsLess_Differential_Rapid(t *testing.T) {
+func TestIsSmaller_Differential_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
 	rapid.Check(t, func(t *rapid.T) {

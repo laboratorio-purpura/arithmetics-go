@@ -7,9 +7,7 @@ import "math/bits"
 
 // Double computes twice an integer, y times.
 //
-// Double computes x × 2^y.
-//
-// Double adds product into the len(product) least significant words of the result.
+// Double adds into product the len(product) least significant words of the result.
 // If product starts nonzero, this operation becomes "double and add".
 //
 // In a binary machine, this is equivalent to a left shift by y.

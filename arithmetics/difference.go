@@ -5,40 +5,29 @@ package arithmetics
 
 import "math/bits"
 
-// Difference with borrow of "long" integers.
+// Subtract computes the difference between two integers.
 //
-// Computes x − y by the "school" method.
-//
-// Stores len(r) words of the result into r;
-// returns the borrow.
-func Difference(r, x, y []uint) uint {
-	xz := min(len(r), len(x))
-	yz := min(len(r), len(y))
-
-	var borrow uint
+// Subtract stores into difference the len(difference) least significant words of the result.
+func Subtract(difference, x, y []uint) (borrow uint) {
+	xz := min(len(difference), len(x))
+	yz := min(len(difference), len(y))
 
 	// subtract words, propagating borrow
 	z := min(xz, yz)
 	for i := 0; i < z; i++ {
-		var difference uint
-		difference, borrow = bits.Sub(x[i], y[i], borrow)
-		r[i] = difference
+		difference[i], borrow = bits.Sub(x[i], y[i], borrow)
 	}
 
 	// propagate borrow
 	if xz > yz {
 		// y is shorter
 		for i := yz; i < xz; i++ {
-			var difference uint
-			difference, borrow = bits.Sub(x[i], 0, borrow)
-			r[i] = difference
+			difference[i], borrow = bits.Sub(x[i], 0, borrow)
 		}
 	} else {
 		// y is not shorter
 		for i := xz; i < yz; i++ {
-			var difference uint
-			difference, borrow = bits.Sub(0, y[i], borrow)
-			r[i] = difference
+			difference[i], borrow = bits.Sub(0, y[i], borrow)
 		}
 	}
 

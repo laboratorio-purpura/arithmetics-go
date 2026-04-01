@@ -7,10 +7,10 @@ import (
 	"math/bits"
 )
 
-// Division2By1WithReciprocal computes the division of a two-word integer by a one-word integer.
+// Divide2By1WithReciprocal computes the division of a two-word integer by a one-word integer.
 //
 // Computes by the "Improved division by invariant integers" method.
-func Division2By1WithReciprocal(x [2]uint, y uint, iy uint) (quotient uint, remainder uint) {
+func Divide2By1WithReciprocal(x [2]uint, y uint, iy uint) (quotient uint, remainder uint) {
 	// 1. <q1, q0> ← v.u1
 	q1, q0 := bits.Mul(x[1], iy)
 	// 2. <q1, q0> ← <q1, q0> + <u1, u0>
@@ -38,22 +38,29 @@ func Division2By1WithReciprocal(x [2]uint, y uint, iy uint) (quotient uint, rema
 	return q1, r
 }
 
-// DivisionBy1WithReciprocal computes the division of a "long" integer by a one-word integer.
+// DivideBy1WithReciprocal computes the division of a "long" integer by a one-word integer.
 //
 // Computes by the "Improved division by invariant integers" method.
-func DivisionBy1WithReciprocal(q []uint, x []uint, y uint, iy uint) (r uint) {
+func DivideBy1WithReciprocal(quotient []uint, x []uint, y uint, iy uint) (remainder uint) {
+	qz := len(quotient)
 	xz := len(x)
-	for i := xz - 1; i >= 0; i-- {
-		x_ := [2]uint{x[i], r}
-		q[i], r = Division2By1WithReciprocal(x_, y, iy)
+
+	if qz < xz {
+		panic("quotient is too short")
 	}
-	return r
+
+	for i := xz; i > 0; i-- {
+		x_ := [2]uint{x[i-1], remainder}
+		quotient[i-1], remainder = Divide2By1WithReciprocal(x_, y, iy)
+	}
+
+	return
 }
 
-// Division3By2WithReciprocal computes the division of a three-word integer by a two-word integer.
+// Divide3By2WithReciprocal computes the division of a three-word integer by a two-word integer.
 //
 // Computes by the "Improved division by invariant integers" method.
-func Division3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (q uint, r [2]uint) {
+func Divide3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (quotient uint, remainder [2]uint) {
 	// 1. <q1,q0> ← v.u2
 	q1, q0 := bits.Mul(iy, x[2])
 	// 2. <q1,q0> ← <q1,q0> + <u2,u1>
