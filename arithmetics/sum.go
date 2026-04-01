@@ -5,13 +5,13 @@ package arithmetics
 
 import "math/bits"
 
-// Sum32 with carry of "long" integers.
+// Sum with carry of "long" integers.
 //
 // Computes x + y by the "school" method.
 //
 // Stores len(r) words of the result into r;
 // returns the carry.
-func Sum32(r, x, y []uint32) uint32 {
+func Sum(r, x, y []uint) uint {
 	// ensure x is not shorter than y
 	if len(x) < len(y) {
 		x, y = y, x
@@ -22,19 +22,19 @@ func Sum32(r, x, y []uint32) uint32 {
 	yz := min(len(r), len(y))
 	// invariant: len(r) >= xz >= yz
 
-	var carry uint32
+	var carry uint
 
 	// add words, propagating carry
 	for i := 0; i < yz; i++ {
-		var sum uint32
-		sum, carry = bits.Add32(x[i], y[i], carry)
+		var sum uint
+		sum, carry = bits.Add(x[i], y[i], carry)
 		r[i] = sum
 	}
 
 	// propagate carry
 	for i := yz; i < xz; i++ {
-		var sum uint32
-		sum, carry = bits.Add32(x[i], 0, carry)
+		var sum uint
+		sum, carry = bits.Add(x[i], 0, carry)
 		r[i] = sum
 	}
 

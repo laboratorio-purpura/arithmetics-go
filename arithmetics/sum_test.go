@@ -12,13 +12,13 @@ import (
 
 func TestSum_Commutativity_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOf(rapid.Uint32()).Draw(t, "x")
-		y := rapid.SliceOf(rapid.Uint32()).Draw(t, "y")
+		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 		rz := len(x) + len(y)
-		r1 := make([]uint32, rz)
-		c1 := Sum32(r1, x, y)
-		r2 := make([]uint32, rz)
-		c2 := Sum32(r2, y, x)
+		r1 := make([]uint, rz)
+		c1 := Sum(r1, x, y)
+		r2 := make([]uint, rz)
+		c2 := Sum(r2, y, x)
 		if !slices.Equal(r1, r2) {
 			t.Error("Sum(x,y) != Sum(y,x)")
 		}
@@ -30,11 +30,11 @@ func TestSum_Commutativity_Rapid(t *testing.T) {
 
 func TestSum_Identity_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOf(rapid.Uint32()).Draw(t, "x")
-		identity := rapid.SliceOf(rapid.Just[uint32](0)).Draw(t, "identity")
+		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+		identity := rapid.SliceOf(rapid.Just[uint](0)).Draw(t, "identity")
 		rz := len(x) + len(identity)
-		r := make([]uint32, rz)
-		c := Sum32(r, x, identity)
+		r := make([]uint, rz)
+		c := Sum(r, x, identity)
 		if !AreEqual(r, x) {
 			t.Error("Sum(x,identity) != x")
 		}
@@ -46,15 +46,15 @@ func TestSum_Identity_Rapid(t *testing.T) {
 
 func TestSum_ResultLessThanPart_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOfN(rapid.Uint32Min(1), 1, -1).Draw(t, "x")
-		y := rapid.SliceOfN(rapid.Uint32Min(1), 1, -1).Draw(t, "y")
+		x := rapid.SliceOfN(rapid.UintMin(1), 1, -1).Draw(t, "x")
+		y := rapid.SliceOfN(rapid.UintMin(1), 1, -1).Draw(t, "y")
 		rz := len(x) + len(y) + 1
-		r := make([]uint32, rz)
-		r[rz-1] = Sum32(r, x, y)
-		if IsLess32(r, x) {
+		r := make([]uint, rz)
+		r[rz-1] = Sum(r, x, y)
+		if IsLess(r, x) {
 			t.Error("Sum(x,y) < x")
 		}
-		if IsLess32(r, y) {
+		if IsLess(r, y) {
 			t.Error("Sum(x,y) < y")
 		}
 	})

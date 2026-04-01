@@ -11,11 +11,11 @@ import (
 
 func TestDifference32_Identity_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOf(rapid.Uint32()).Draw(t, "x")
-		identity := rapid.SliceOf(rapid.Just[uint32](0)).Draw(t, "identity")
+		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+		identity := rapid.SliceOf(rapid.Just[uint](0)).Draw(t, "identity")
 		rz := max(len(x), len(identity))
-		r := make([]uint32, rz)
-		b := Difference32(r, x, identity)
+		r := make([]uint, rz)
+		b := Difference(r, x, identity)
 		if !AreEqual(r, x) {
 			t.Errorf("Difference(x,identity) != x")
 		}
@@ -27,17 +27,17 @@ func TestDifference32_Identity_Rapid(t *testing.T) {
 
 func TestDifference32_ResultLessThanPart_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOf(rapid.Uint32()).Draw(t, "x")
-		y := rapid.SliceOf(rapid.Uint32()).Draw(t, "y")
+		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 		rz := len(x) + len(y)
-		r := make([]uint32, rz)
-		b := Difference32(r, x, y)
+		r := make([]uint, rz)
+		b := Difference(r, x, y)
 		if b == 0 {
-			if IsMore32(r, x) {
+			if IsMore(r, x) {
 				t.Error("x >= y but Difference(x,y) > x")
 			}
 		} else {
-			if IsLess32(r, x) {
+			if IsLess(r, x) {
 				t.Error("x < y but Difference(x,y) < x")
 			}
 		}

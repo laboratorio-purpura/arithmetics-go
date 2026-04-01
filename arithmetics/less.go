@@ -7,40 +7,40 @@ import (
 	"math/bits"
 )
 
-// IsLess32 is true if and only if x is less than y.
-func IsLess32(x, y []uint32) bool {
+// IsLess is true if and only if x is less than y.
+func IsLess(x, y []uint) bool {
 	xz := len(x)
 	yz := len(y)
 	z := min(xz, yz)
 
-	var borrow uint32
+	var borrow uint
 
 	for i := 0; i != z; i++ {
-		_, borrow = bits.Sub32(x[i], y[i], borrow)
+		_, borrow = bits.Sub(x[i], y[i], borrow)
 	}
 
 	for i := z; i != xz; i++ {
-		_, borrow = bits.Sub32(x[i], 0, borrow)
+		_, borrow = bits.Sub(x[i], 0, borrow)
 	}
 
 	for i := z; i != yz; i++ {
-		_, borrow = bits.Sub32(0, y[i], borrow)
+		_, borrow = bits.Sub(0, y[i], borrow)
 	}
 
 	return borrow > 0
 }
 
-// NotLess32 is true if and only if x is not less than y.
-func NotLess32(x, y []uint32) bool {
-	return !IsLess32(x, y)
+// NotLess is true if and only if x is not less than y.
+func NotLess(x, y []uint) bool {
+	return !IsLess(x, y)
 }
 
-// IsMore32 is true if and only if x is more than y.
-func IsMore32(x, y []uint32) bool {
-	return IsLess32(y, x)
+// IsMore is true if and only if x is more than y.
+func IsMore(x, y []uint) bool {
+	return IsLess(y, x)
 }
 
-// NotMore32 is true if and only if x is not more than y.
-func NotMore32(x, y []uint32) bool {
-	return !IsLess32(y, x)
+// NotMore is true if and only if x is not more than y.
+func NotMore(x, y []uint) bool {
+	return !IsLess(y, x)
 }

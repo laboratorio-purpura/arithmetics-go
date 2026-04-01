@@ -11,17 +11,19 @@ import (
 )
 
 func TestDivision2By1WithReciprocal32_Differential_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		y := rapid.Uint32Min(1<<31).Draw(t, "y")
-		x0 := rapid.Uint32().Draw(t, "x0")
-		x1 := rapid.Uint32Max(y-1).Draw(t, "x1")
-		x := [2]uint32{x0, x1}
+	const Bits = bits.UintSize
 
-		iy := Reciprocal1W32(y)
-		q, r := Division2By1WithReciprocal32(x, y, iy)
+	rapid.Check(t, func(t *rapid.T) {
+		y := rapid.UintMin(1<<(Bits-1)).Draw(t, "y")
+		x0 := rapid.Uint().Draw(t, "x0")
+		x1 := rapid.UintMax(y-1).Draw(t, "x1")
+		x := [2]uint{x0, x1}
+
+		iy := Reciprocal(y)
+		q, r := Division2By1WithReciprocal(x, y, iy)
 		t.Logf("q = %v, r = %v", q, r)
 
-		q_, r_ := bits.Div32(x1, x0, y)
+		q_, r_ := bits.Div(x1, x0, y)
 		if q != q_ {
 			t.Errorf("q = %v, q_ = %v", q, q_)
 		}
@@ -32,22 +34,24 @@ func TestDivision2By1WithReciprocal32_Differential_Rapid(t *testing.T) {
 }
 
 func TestDivisionBy1WithReciprocal32_Definition_Rapid(t *testing.T) {
+	const Bits = bits.UintSize
+
 	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOfN(rapid.Uint32(), 2, -1).Draw(t, "x")
-		x[len(x)-1] |= 1 << 31
+		x := rapid.SliceOfN(rapid.Uint(), 2, -1).Draw(t, "x")
+		x[len(x)-1] |= 1 << (Bits - 1)
 		t.Logf("x = %v", x)
-		y := rapid.Uint32Min(1<<31).Draw(t, "y1")
+		y := rapid.UintMin(1<<(Bits-1)).Draw(t, "y1")
 		t.Logf("y = %v", y)
 
-		iy := Reciprocal1W32(y)
+		iy := Reciprocal(y)
 
-		q := make([]uint32, len(x))
-		r := DivisionBy1WithReciprocal32(q, x, y, iy)
+		q := make([]uint, len(x))
+		r := DivisionBy1WithReciprocal(q, x, y, iy)
 		t.Logf("q = %v, r = %v", q, r)
 
-		x_ := make([]uint32, len(x)+1)
-		Product32(x_, []uint32{y}, q)
-		Sum32(x_, x_, []uint32{r})
+		x_ := make([]uint, len(x)+1)
+		Product(x_, []uint{y}, q)
+		Sum(x_, x_, []uint{r})
 		if NotEqual(x_, x[:]) {
 			t.Errorf("x_ = %v", x_)
 		}
@@ -55,22 +59,24 @@ func TestDivisionBy1WithReciprocal32_Definition_Rapid(t *testing.T) {
 }
 
 func TestDivision3By2WithReciprocal32_Definition_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		y0 := rapid.Uint32().Draw(t, "y0")
-		y1 := rapid.Uint32Min(1<<31).Draw(t, "y1")
-		y := [2]uint32{y0, y1}
-		x0 := rapid.Uint32().Draw(t, "x0")
-		x1 := rapid.Uint32().Draw(t, "x1")
-		x2 := rapid.Uint32Max(y1-1).Draw(t, "x2")
-		x := [3]uint32{x0, x1, x2}
+	const Bits = bits.UintSize
 
-		iy := Reciprocal2W32(y)
-		q, r := Division3By2WithReciprocal32(x, y, iy)
+	rapid.Check(t, func(t *rapid.T) {
+		y0 := rapid.Uint().Draw(t, "y0")
+		y1 := rapid.UintMin(1<<(Bits-1)).Draw(t, "y1")
+		y := [2]uint{y0, y1}
+		x0 := rapid.Uint().Draw(t, "x0")
+		x1 := rapid.Uint().Draw(t, "x1")
+		x2 := rapid.UintMax(y1-1).Draw(t, "x2")
+		x := [3]uint{x0, x1, x2}
+
+		iy := Reciprocal2(y)
+		q, r := Division3By2WithReciprocal(x, y, iy)
 		t.Logf("q = %v, r = %v", q, r)
 
-		x_ := make([]uint32, 3)
-		Product32(x_, y[:], []uint32{q})
-		Sum32(x_, x_, r[:])
+		x_ := make([]uint, 3)
+		Product(x_, y[:], []uint{q})
+		Sum(x_, x_, r[:])
 		if NotEqual(x_, x[:]) {
 			t.Errorf("x_ = %v", x_)
 		}
