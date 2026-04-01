@@ -45,7 +45,7 @@ func Reciprocal2(y [2]uint) uint {
 		// 13. v ← v − 1
 		v = v - 1
 		// 14. if <p, t0> ≥ <d1, d0>
-		if NotLess([]uint{t0, p}, y[:]) {
+		if NotSmaller([]uint{t0, p}, y[:]) {
 			// 15. v ← v − 1
 			v = v - 1
 		}

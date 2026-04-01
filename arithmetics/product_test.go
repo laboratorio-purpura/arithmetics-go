@@ -58,10 +58,10 @@ func TestProduct32_ResultLessThanPart_Rapid(t *testing.T) {
 		rz := len(x) + len(y)
 		r := make([]uint, rz)
 		Product(r, x, y)
-		if IsLess(r, x) {
+		if IsSmaller(r, x) {
 			t.Error("Product(x,y) < x")
 		}
-		if IsLess(r, x) {
+		if IsSmaller(r, x) {
 			t.Error("Product(x,y) < y")
 		}
 	})

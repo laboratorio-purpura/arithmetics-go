@@ -7,8 +7,8 @@ import (
 	"math/bits"
 )
 
-// IsLess is true if and only if x is less than y.
-func IsLess(x, y []uint) bool {
+// IsSmaller is true if and only if x is less than y.
+func IsSmaller(x, y []uint) bool {
 	xz := len(x)
 	yz := len(y)
 	z := min(xz, yz)
@@ -30,17 +30,7 @@ func IsLess(x, y []uint) bool {
 	return borrow > 0
 }
 
-// NotLess is true if and only if x is not less than y.
-func NotLess(x, y []uint) bool {
-	return !IsLess(x, y)
-}
-
-// IsMore is true if and only if x is more than y.
-func IsMore(x, y []uint) bool {
-	return IsLess(y, x)
-}
-
-// NotMore is true if and only if x is not more than y.
-func NotMore(x, y []uint) bool {
-	return !IsLess(y, x)
+// NotSmaller is true if and only if x is not less than y.
+func NotSmaller(x, y []uint) bool {
+	return !IsSmaller(x, y)
 }

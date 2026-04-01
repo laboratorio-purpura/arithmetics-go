@@ -80,7 +80,7 @@ func Division3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (q uint, r [2]uin
 		r1, _ = bits.Add(r1, y[1], carry)
 	}
 	// 10. if <r1,r0> ≥ <d1,d0>
-	if NotLess([]uint{r0, r1}, y[:]) {
+	if NotSmaller([]uint{r0, r1}, y[:]) {
 		// 11. q1 ← q1 + 1
 		q1, _ = bits.Add(q1, 1, 0)
 		// 12. <r1,r0> ← <r1,r0> − <d1,d0>
