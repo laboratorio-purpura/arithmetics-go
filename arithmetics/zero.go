@@ -3,26 +3,34 @@
 
 package arithmetics
 
-import "golang.org/x/exp/constraints"
+import (
+	"golang.org/x/exp/constraints"
+)
 
-// IsZero returns true if and only if x is zero.
+// IsZero tests if an integer is zero.
 func IsZero[Word constraints.Unsigned](x []Word) bool {
 	xz := len(x)
+
+	// integer is zero if and only if every word is zero
 	for i := 0; i < xz; i++ {
 		if x[i] != 0 {
 			return false
 		}
 	}
+
 	return true
 }
 
-// NotZero returns true if and only if x is nonzero.
+// NotZero tests if an integer is not zero.
 func NotZero[Word constraints.Unsigned](x []Word) bool {
 	xz := len(x)
+
+	// integer is not zero if and only if any word is nonzero
 	for i := 0; i < xz; i++ {
 		if x[i] != 0 {
 			return true
 		}
 	}
+
 	return false
 }
