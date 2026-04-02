@@ -5,6 +5,13 @@ import (
 	"math/bits"
 )
 
+// Reciprocal computes an approximation to the multiplicative inverse of a "normalised" one-word integer.
+//
+// Requires:
+// y is "normalised".
+// Otherwise, the result is undefined.
+//
+// This implementation applies the "Improved division by invariant integers" method.
 func Reciprocal(y uint) uint {
 	// t ← β - 1
 	t := uint(math.MaxUint)
@@ -13,6 +20,13 @@ func Reciprocal(y uint) uint {
 	return iy
 }
 
+// Reciprocal2 computes an approximation to the multiplicative inverse of a "normalised" two-word integer.
+//
+// Requires:
+// y is "normalised".
+// Otherwise, the result is undefined.
+//
+// This implementation applies the "Improved division by invariant integers" method.
 func Reciprocal2(y [2]uint) uint {
 	// 1. v ← RECIPROCAL_WORD(d1)
 	v := Reciprocal(y[1])
