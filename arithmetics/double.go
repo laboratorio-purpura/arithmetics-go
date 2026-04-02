@@ -5,7 +5,7 @@ package arithmetics
 
 import "math/bits"
 
-// Double computes an integer twice to a power.
+// Double computes twice (to a power) of an integer.
 //
 // Double adds into product the len(product) least significant words of the result.
 // It permits aliasing product to x, in which case it becomes "double accumulate".

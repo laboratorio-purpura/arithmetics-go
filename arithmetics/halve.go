@@ -2,7 +2,7 @@ package arithmetics
 
 import "math/bits"
 
-// Halve computes an integer half to a power.
+// Halve computes half (to a power) of an integer.
 //
 // Halve stores into quotient the len(quotient) least significant words of the result.
 // It permits aliasing quotient to x, in which case it becomes "halve accumulate".
