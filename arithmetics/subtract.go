@@ -8,29 +8,33 @@ import "math/bits"
 // Subtract computes the difference between two integers.
 //
 // Subtract stores into difference the len(difference) least significant words of the result.
+// It permits aliasing difference to x, in which case it becomes "subtract accumulate".
+//
+// This implementation applies the "school" method described in Knuth, section 4.3.1.
 func Subtract(difference, x, y []uint) (borrow uint) {
-	xz := min(len(difference), len(x))
-	yz := min(len(difference), len(y))
+	dz := len(difference)
+	xz := len(x)
+	yz := len(y)
 
-	// subtract words, propagating borrow
-	z := min(xz, yz)
+	// count of result words to compute
+	z := min(dz, xz, yz)
+
+	// subtract x and y word by word,
+	// from least to most significant,
+	// propagating borrow
 	for i := 0; i < z; i++ {
 		difference[i], borrow = bits.Sub(x[i], y[i], borrow)
 	}
 
-	// propagate borrow
-	if xz > yz {
-		// y is shorter
-		for i := yz; i < xz; i++ {
-			difference[i], borrow = bits.Sub(x[i], 0, borrow)
-		}
-	} else {
-		// y is not shorter
-		for i := xz; i < yz; i++ {
-			difference[i], borrow = bits.Sub(0, y[i], borrow)
-		}
+	// either propagate borrow through x
+	for i := z; i < xz; i++ {
+		difference[i], borrow = bits.Sub(x[i], 0, borrow)
 	}
 
-	// invariant: borrow == 0 || borrow == 1
-	return borrow
+	// or propagate borrow through y
+	for i := z; i < yz; i++ {
+		difference[i], borrow = bits.Sub(0, y[i], borrow)
+	}
+
+	return
 }

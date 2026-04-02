@@ -5,12 +5,12 @@ package arithmetics
 
 import "math/bits"
 
-// Double computes twice an integer, y times.
+// Double computes an integer twice to a power.
 //
 // Double adds into product the len(product) least significant words of the result.
-// If product starts nonzero, this operation becomes "double and add".
+// It permits aliasing product to x, in which case it becomes "double accumulate".
 //
-// In a binary machine, this is equivalent to a left shift by y.
+// This implementation applies the "binary shift" method.
 func Double(product []uint, x []uint, y uint) (excess uint) {
 	const Bits = bits.UintSize
 
@@ -22,19 +22,19 @@ func Double(product []uint, x []uint, y uint) (excess uint) {
 		panic("y >= Bits")
 	}
 
-	// compute count of resulting words
+	// count of result words to compute
 	z := min(pz, xz)
 
-	// compute most significant resulting word
-	if z > 0 {
-		excess = x[z-1] >> (Bits - y)
-		product[z-1] += x[z-1] << y
-	}
-
-	// compute remaining resulting words
-	for i := z; i > 1; i-- {
-		product[i-1] += x[i-2] >> (Bits - y)
-		product[i-2] += x[i-2] << y
+	// double word by word,
+	// from least to most significant,
+	// propagating excess
+	for i := 0; i < z; i++ {
+		// x[i] × 2^y
+		p0 := x[i] << y
+		p1 := x[i] >> (Bits - y)
+		// store low word, propagate high word
+		product[i] = p0 + excess
+		excess = p1
 	}
 
 	return

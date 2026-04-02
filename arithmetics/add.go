@@ -8,25 +8,32 @@ import "math/bits"
 // Add computes the sum of two integers.
 //
 // Add stores into sum the len(sum) least significant words of the result.
+// It permits aliasing sum to x, in which case it becomes "add accumulate".
+//
+// This implementation applies the "school" method described in Knuth, section 4.3.1.
 func Add(sum, x, y []uint) (carry uint) {
-	// ensure x is not shorter than y
-	if len(x) < len(y) {
-		x, y = y, x
-	}
+	sz := len(sum)
+	xz := len(x)
+	yz := len(y)
 
-	// truncate result to len(r) words
-	xz := min(len(sum), len(x))
-	yz := min(len(sum), len(y))
-	// invariant: len(r) >= xz >= yz
+	// count of result words to compute
+	z := min(sz, xz, yz)
 
-	// add words, propagating carry
-	for i := 0; i < yz; i++ {
+	// add x and y word by word,
+	// from least to most significant,
+	// propagating carry
+	for i := 0; i < z; i++ {
 		sum[i], carry = bits.Add(x[i], y[i], carry)
 	}
 
-	// propagate carry
-	for i := yz; i < xz; i++ {
+	// either propagate carry through x
+	for i := z; i < xz; i++ {
 		sum[i], carry = bits.Add(x[i], 0, carry)
+	}
+
+	// or propagate carry through y
+	for i := z; i < yz; i++ {
+		sum[i], carry = bits.Add(0, y[i], carry)
 	}
 
 	return
