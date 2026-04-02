@@ -5,26 +5,27 @@ package arithmetics
 
 import "golang.org/x/exp/constraints"
 
-// AreEqual is true if and only if x and y are equal.
+// AreEqual tests if two integers are equal.
 func AreEqual[Word constraints.Unsigned](x, y []Word) bool {
-	// ensure x is not shorter than y
-	if len(x) < len(y) {
-		x, y = y, x
-	}
 	xz := len(x)
 	yz := len(y)
-	// invariant: xz >= yz
 
-	// test common digits in whatever order
-	for i := 0; i < yz; i++ {
+	z := min(xz, yz)
+
+	for i := 0; i < z; i++ {
 		if x[i] != y[i] {
 			return false
 		}
 	}
 
-	// test excess digits: nonzero => x != y
-	for i := yz; i < xz; i++ {
+	for i := z; i < xz; i++ {
 		if x[i] != 0 {
+			return false
+		}
+	}
+
+	for i := z; i < yz; i++ {
+		if y[i] != 0 {
 			return false
 		}
 	}
@@ -32,30 +33,7 @@ func AreEqual[Word constraints.Unsigned](x, y []Word) bool {
 	return true
 }
 
-// NotEqual is true if and only if x and y are not equal.
+// NotEqual tests if two integers are not equal.
 func NotEqual[Word constraints.Unsigned](x, y []Word) bool {
-	// operation is commutative
-	// ensure x is not shorter than y
-	if len(x) < len(y) {
-		x, y = y, x
-	}
-	xz := len(x)
-	yz := len(y)
-	// invariant: xz >= yz
-
-	// test common digits, order doesn't matter
-	for i := 0; i < yz; i++ {
-		if x[i] != y[i] {
-			return true
-		}
-	}
-
-	// test excess digits: nonzero => x != y
-	for i := yz; i < xz; i++ {
-		if x[i] != 0 {
-			return true
-		}
-	}
-
-	return false
+	return !AreEqual(x, y)
 }

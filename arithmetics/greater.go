@@ -1,41 +1,37 @@
 package arithmetics
 
-import "math/bits"
-
-// IsGreater tests if x is greater than y.
+// IsGreater tests if an integer is greater than another.
 func IsGreater(x, y []uint) bool {
 	xz := len(x)
 	yz := len(y)
 
-	// count of common words
 	z := min(xz, yz)
 
-	// x > y <=> y < x <=> x - y < 0
-	// compare words from least to most significant,
-	// computing the "borrow" of their difference.
-
-	var borrow uint
-
-	// common words
-	for i := 0; i != z; i++ {
-		_, borrow = bits.Sub(y[i], x[i], borrow)
+	for i := xz; i > z; i-- {
+		if x[i-1] != 0 {
+			return true
+		}
 	}
 
-	// x excess words
-	for i := z; i != xz; i++ {
-		_, borrow = bits.Sub(0, x[i], borrow)
+	for i := yz; i > z; i-- {
+		if y[i-1] != 0 {
+			return false
+		}
 	}
 
-	// y excess words
-	for i := z; i != yz; i++ {
-		_, borrow = bits.Sub(y[i], 0, borrow)
+	for i := z; i > 0; i-- {
+		if x[i-1] < y[i-1] {
+			return false
+		}
+		if x[i-1] > y[i-1] {
+			return true
+		}
 	}
 
-	// borrow > 0 => y < x
-	return borrow > 0
+	return false
 }
 
-// NotGreater tests if x is *not* greater than y.
+// NotGreater tests if x is not greater than y.
 func NotGreater(x, y []uint) bool {
 	return !IsGreater(x, y)
 }

@@ -3,34 +3,38 @@
 
 package arithmetics
 
-import (
-	"math/bits"
-)
-
-// IsSmaller is true if and only if x is less than y.
+// IsSmaller tests if an integer is smaller than another.
 func IsSmaller(x, y []uint) bool {
 	xz := len(x)
 	yz := len(y)
+
 	z := min(xz, yz)
 
-	var borrow uint
-
-	for i := 0; i != z; i++ {
-		_, borrow = bits.Sub(x[i], y[i], borrow)
+	for i := xz; i > z; i-- {
+		if x[i-1] != 0 {
+			return false
+		}
 	}
 
-	for i := z; i != xz; i++ {
-		_, borrow = bits.Sub(x[i], 0, borrow)
+	for i := yz; i > z; i-- {
+		if y[i-1] != 0 {
+			return true
+		}
 	}
 
-	for i := z; i != yz; i++ {
-		_, borrow = bits.Sub(0, y[i], borrow)
+	for i := z; i > 0; i-- {
+		if x[i-1] < y[i-1] {
+			return true
+		}
+		if x[i-1] > y[i-1] {
+			return false
+		}
 	}
 
-	return borrow > 0
+	return false
 }
 
-// NotSmaller is true if and only if x is not less than y.
+// NotSmaller tests if an integer is not smaller than another.
 func NotSmaller(x, y []uint) bool {
 	return !IsSmaller(x, y)
 }
