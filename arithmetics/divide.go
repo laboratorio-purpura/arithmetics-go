@@ -7,10 +7,16 @@ import (
 	"math/bits"
 )
 
-// Divide2By1WithReciprocal computes the division of a two-word integer by a one-word integer.
+// DivideNormal2By1WithReciprocal computes the ratio of a two-word integer by a one-word integer.
 //
-// Computes by the "Improved division by invariant integers" method.
-func Divide2By1WithReciprocal(x [2]uint, y uint, iy uint) (quotient uint, remainder uint) {
+// Requires:
+// y is "normalised";
+// iy == Reciprocal(y);
+// x[1] < y;
+// otherwise, the result will be wrong.
+//
+// This implementation applies the "Improved division by invariant integers" method.
+func DivideNormal2By1WithReciprocal(x [2]uint, y uint, iy uint) (quotient uint, remainder uint) {
 	// 1. <q1, q0> ← v.u1
 	q1, q0 := bits.Mul(x[1], iy)
 	// 2. <q1, q0> ← <q1, q0> + <u1, u0>
@@ -38,29 +44,71 @@ func Divide2By1WithReciprocal(x [2]uint, y uint, iy uint) (quotient uint, remain
 	return q1, r
 }
 
-// DivideBy1WithReciprocal computes the division of a "long" integer by a one-word integer.
+// DivideNBy1 computes the ratio of a multi-word integer by a one-word integer.
 //
-// Computes by the "Improved division by invariant integers" method.
-func DivideBy1WithReciprocal(quotient []uint, x []uint, y uint, iy uint) (remainder uint) {
+// This implementation applies the "Improved division by invariant integers" method.
+func DivideNBy1(quotient []uint, x []uint, y uint) (remainder uint) {
 	qz := len(quotient)
 	xz := len(x)
 
+	// TODO: lift this restriction
 	if qz < xz {
 		panic("quotient is too short")
 	}
 
-	for i := xz; i > 0; i-- {
-		x_ := [2]uint{x[i-1], remainder}
-		quotient[i-1], remainder = Divide2By1WithReciprocal(x_, y, iy)
+	if xz == 0 {
+		return
 	}
+
+	if y == 0 {
+		return
+	}
+
+	// TODO: request this memory from user?
+	t := make([]uint, xz)
+	copy(t, x)
+
+	// reduce dividend
+	quotient[qz-1] += t[xz-1] / y
+	t[xz-1] = t[xz-1] % y
+	// invariant: t[xz-1] < y
+
+	// "normalise" operands
+	n := bits.LeadingZeros(y)
+	y = y << n
+	_ = Double(t, t, uint(n))
+	// invariant: y is "normalised"
+	// invariant: t did not overflow
+
+	// compute reciprocal approximation
+	iy := Reciprocal(y)
+
+	// divide word by word
+	for i := xz; i > 0; i-- {
+		t_ := [2]uint{t[i-1], remainder}
+		// invariant: t_[1] < y
+		q, r := DivideNormal2By1WithReciprocal(t_, y, iy)
+		quotient[i-1] += q
+		remainder = r
+	}
+
+	// de-"normalise" remainder
+	remainder >>= n
+	// invariant: remainder did not underflow
 
 	return
 }
 
-// Divide3By2WithReciprocal computes the division of a three-word integer by a two-word integer.
+// DivideNormal3By2WithReciprocal computes the ratio of a three-word integer by a two-word integer.
 //
-// Computes by the "Improved division by invariant integers" method.
-func Divide3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (quotient uint, remainder [2]uint) {
+// Requires:
+// y is "normalised";
+// iy == Reciprocal2(y);
+// x[2:3] < y;
+// otherwise, the result will be wrong.
+//
+// This implementation applies the "Improved division by invariant integers" method.
+func DivideNormal3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (quotient uint, remainder [2]uint) {
 	// 1. <q1,q0> ← v.u2
 	q1, q0 := bits.Mul(iy, x[2])
 	// 2. <q1,q0> ← <q1,q0> + <u2,u1>
@@ -95,4 +143,75 @@ func Divide3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (quotient uint, rem
 		r1, _ = bits.Sub(r1, y[1], borrow)
 	}
 	return q1, [2]uint{r0, r1}
+}
+
+// DivideNormalN1ByN computes the ratio of an (N+1)-word integer by a N-word integer.
+//
+// DivideNormalN1ByN requires:
+// len(y) > 1;
+// len(x) = len(y) + 1;
+// y is "normalised";
+// x[N-1:N+1] < y[N-1];
+// otherwise, the result will be wrong.
+//
+// DivideNormalN1ByN permits aliasing remainder to x, in which case it becomes "divide accumulate".
+//
+// This implementation applies the "school" method described in Knuth, section 4.3.1, steps D3 through D6.
+// optimized by eliding a test in step D3.
+func DivideNormalN1ByN(remainder []uint, x []uint, y []uint) (quotient uint) {
+	xz := len(x)
+	yz := len(y)
+
+	// step D3: calculate q'
+	q_, r_ := bits.Div(x[xz-1], x[xz-2], y[yz-1])
+	// invariant: q' - 2 ≤ quotient ≤ q'
+
+	// step D3: reduce q'
+	for {
+		// if q' >= β…
+		// but it will never,
+		// because we require x[N-1:N+1] < y[N-1] => x[N-1:N+1] / y[N-1] < β.
+
+		// or if q' × y[yz-2] > { x[yz-2], r' }…
+		// let t0 = q' × y[yz-2]
+		var t0 [2]uint
+		t0[1], t0[0] = bits.Mul(q_, y[yz-2])
+		// let t1 = { x[yz-2], r' }
+		var t1 [2]uint
+		t1 = [2]uint{x[xz-2], r_}
+		if NotGreater(t0[:], t1[:]) {
+			break
+		}
+
+		// then fix q', r'
+		q_ = q_ - 1
+		var carry uint
+		r_, carry = bits.Add(r_, y[yz-1], 0)
+
+		// if r' < β, repeat
+		if carry != 0 {
+			break
+		}
+	}
+	// invariant: q' - 1 ≤ q ≤ q'
+
+	// step D4: multiply and subtract
+	var borrow uint
+	{
+		// let t = q' × y
+		t := make([]uint, yz+1)
+		Multiply(t, []uint{q_}, y)
+		// remainder <- x - q' × y
+		borrow = Subtract(remainder, x, t)
+	}
+
+	// step D5: test remainder
+	if borrow != 0 {
+		// step D6: add back
+		q_ = q_ - 1
+		_ = Add(remainder, remainder, y)
+	}
+	// invariant: q' = q
+
+	return q_
 }

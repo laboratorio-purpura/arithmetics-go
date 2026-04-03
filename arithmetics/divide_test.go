@@ -4,26 +4,35 @@
 package arithmetics
 
 import (
+	"math/big"
 	"math/bits"
 	"testing"
 
 	"pgregory.net/rapid"
+	"purpura.dev.br/arithmetics/arithmetics/internal"
 )
 
-func TestDivide2By1WithReciprocal32_Differential_Rapid(t *testing.T) {
+func TestDivideNormal2By1WithReciprocal_Differential_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
 	rapid.Check(t, func(t *rapid.T) {
+		// generate samples
 		y := rapid.UintMin(1<<(Bits-1)).Draw(t, "y")
-		x0 := rapid.Uint().Draw(t, "x0")
-		x1 := rapid.UintMax(y-1).Draw(t, "x1")
-		x := [2]uint{x0, x1}
+		xf := func(it []uint) bool {
+			return it[1] < y
+		}
+		x := rapid.SliceOfN(rapid.Uint(), 2, 2).Filter(xf).Draw(t, "x")
 
+		// compute with purple
 		iy := Reciprocal(y)
-		q, r := Divide2By1WithReciprocal(x, y, iy)
+		q, r := DivideNormal2By1WithReciprocal([2]uint(x), y, iy)
 		t.Logf("q = %v, r = %v", q, r)
 
-		q_, r_ := bits.Div(x1, x0, y)
+		// compute with math/bits
+		q_, r_ := bits.Div(x[1], x[0], y)
+		t.Logf("q_ = %v, r_ = %v", q_, r_)
+
+		// compare
 		if q != q_ {
 			t.Errorf("q = %v, q_ = %v", q, q_)
 		}
@@ -33,52 +42,112 @@ func TestDivide2By1WithReciprocal32_Differential_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivideBy1WithReciprocal32_Definition_Rapid(t *testing.T) {
-	const Bits = bits.UintSize
-
+func TestDivideNBy1_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOfN(rapid.Uint(), 2, -1).Draw(t, "x")
-		x[len(x)-1] |= 1 << (Bits - 1)
-		t.Logf("x = %v", x)
-		y := rapid.UintMin(1<<(Bits-1)).Draw(t, "y1")
-		t.Logf("y = %v", y)
+		// generate samples
+		y := rapid.UintMin(1).Draw(t, "y1")
+		t.Logf("y = %X", y)
+		x := rapid.SliceOfN(rapid.Uint(), 1, 32).Draw(t, "x")
+		t.Logf("x = %X", x)
 
-		iy := Reciprocal(y)
-
+		// compute with purple
 		q := make([]uint, len(x))
-		r := DivideBy1WithReciprocal(q, x, y, iy)
-		t.Logf("q = %v, r = %v", q, r)
+		r := DivideNBy1(q, x, y)
+		t.Logf("q = %X, r = %X", q, r)
 
-		x_ := make([]uint, len(x)+1)
-		Multiply(x_, []uint{y}, q)
-		Add(x_, x_, []uint{r})
-		if NotEqual(x_, x[:]) {
-			t.Errorf("x_ = %v", x_)
+		// compute with math/big
+		x_ := internal.ToBigInt(x)
+		y_ := big.NewInt(0).SetUint64(uint64(y))
+		q_ := big.NewInt(0).Div(x_, y_)
+		r_ := big.NewInt(0).Mod(x_, y_)
+		t.Logf("q_ = %X, r_ = %X", q_, r_)
+
+		// compare
+		if internal.ToBigInt(q).Cmp(q_) != 0 {
+			t.Error("difference in quotient")
+		}
+		if big.NewInt(0).SetUint64(uint64(r)).Cmp(r_) != 0 {
+			t.Error("difference in remainder")
 		}
 	})
 }
 
-func TestDivide3By2WithReciprocal32_Definition_Rapid(t *testing.T) {
+func TestDivideNormal3By2WithReciprocal_Differential_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
 	rapid.Check(t, func(t *rapid.T) {
-		y0 := rapid.Uint().Draw(t, "y0")
-		y1 := rapid.UintMin(1<<(Bits-1)).Draw(t, "y1")
-		y := [2]uint{y0, y1}
-		x0 := rapid.Uint().Draw(t, "x0")
-		x1 := rapid.Uint().Draw(t, "x1")
-		x2 := rapid.UintMax(y1-1).Draw(t, "x2")
-		x := [3]uint{x0, x1, x2}
+		// generate samples
+		yf := func(i []uint) bool {
+			return i[1]&(1<<(Bits-1)) != 0
+		}
+		y := [2]uint(rapid.SliceOfN(rapid.Uint(), 2, 2).Filter(yf).Draw(t, "y"))
+		t.Logf("y = %X", y)
+		xf := func(i []uint) bool {
+			return IsSmaller(i[1:3], y[:])
+		}
+		x := [3]uint(rapid.SliceOfN(rapid.Uint(), 3, 3).Filter(xf).Draw(t, "x"))
+		t.Logf("x = %X", x)
 
+		// compute with purple
 		iy := Reciprocal2(y)
-		q, r := Divide3By2WithReciprocal(x, y, iy)
+		q, r := DivideNormal3By2WithReciprocal(x, y, iy)
+		t.Logf("q = %X, r = %X", q, r)
+
+		// compute with math/big
+		x_ := internal.ToBigInt(x[:])
+		y_ := internal.ToBigInt(y[:])
+		q_ := big.NewInt(0).Div(x_, y_)
+		r_ := big.NewInt(0).Mod(x_, y_)
+		t.Logf("q_ = %X, r_ = %X", q_, r_)
+
+		// compare
+		if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {
+			t.Error("difference in quotient")
+		}
+		if internal.ToBigInt(r[:]).Cmp(r_) != 0 {
+			t.Error("difference in remainder")
+		}
+	})
+}
+
+func TestDivideNormalN1ByN_Differential_Rapid(t *testing.T) {
+	const Bits = bits.UintSize
+
+	rapid.Check(t, func(t *rapid.T) {
+		// generate samples
+		N := rapid.IntRange(2, 31).Draw(t, "N")
+		t.Logf("N = %v", N)
+		yf := func(i []uint) bool {
+			return i[N-1]&(1<<Bits-1) != 0
+		}
+		y := rapid.SliceOfN(rapid.Uint(), N, N).Filter(yf).Draw(t, "y")
+		t.Logf("y = %v", y)
+		xf := func(i []uint) bool {
+			yz := len(y)
+			mz := len(i) - yz
+			return IsSmaller(i[mz-1:mz+yz], y)
+		}
+		x := rapid.SliceOfN(rapid.Uint(), N+1, N+1).Filter(xf).Draw(t, "x")
+		t.Logf("x = %v", x)
+
+		// compute with purple
+		r := make([]uint, len(x))
+		q := DivideNormalN1ByN(r, x, y)
 		t.Logf("q = %v, r = %v", q, r)
 
-		x_ := make([]uint, 3)
-		Multiply(x_, y[:], []uint{q})
-		Add(x_, x_, r[:])
-		if NotEqual(x_, x[:]) {
-			t.Errorf("x_ = %v", x_)
+		// compute with math/big
+		x_ := internal.ToBigInt(x)
+		y_ := internal.ToBigInt(y)
+		q_ := big.NewInt(0).Div(x_, y_)
+		r_ := big.NewInt(0).Mod(x_, y_)
+		t.Logf("q_ = %v, r_ = %v", q_, r_)
+
+		// compare
+		if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {
+			t.Error("difference in quotient")
+		}
+		if internal.ToBigInt(r).Cmp(r_) != 0 {
+			t.Error("difference in remainder")
 		}
 	})
 }
