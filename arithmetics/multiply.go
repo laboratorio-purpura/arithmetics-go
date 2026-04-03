@@ -20,7 +20,7 @@ func Multiply(product, x, y []uint) {
 
 	// TODO: lift this restriction
 	if len(product) < xz+yz {
-		panic("product is too small")
+		panic("product is too short")
 	}
 
 	// multiply x and y word by word,
