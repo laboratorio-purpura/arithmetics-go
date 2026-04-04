@@ -150,8 +150,9 @@ func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 		x := rapid.SliceOfN(rapid.Uint(), N+1, N+1).Filter(isStrict).Draw(t, "x")
 
 		// compute with purple
+		iy := Reciprocal(y[len(y)-1])
 		r := make([]uint, len(x))
-		q := DivideNormalStrictN1ByN(r, x, y)
+		q := DivideNormalStrictN1ByN(r, x, y, iy)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -166,6 +167,39 @@ func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 			t.Error("difference in quotient")
 		}
 		if internal.ToBigInt(r).Cmp(r_) != 0 {
+			t.Error("difference in remainder")
+		}
+	})
+}
+
+func TestDivideNormalN1ByN_Accumulate_Rapid(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		// generate samples
+		N := rapid.IntRange(2, 31).Draw(t, "N")
+		t.Logf("N = %v", N)
+		y := rapid.SliceOfN(rapid.Uint(), N, N).Filter(IsNormal).Draw(t, "y")
+		t.Logf("y = %v", y)
+		x := rapid.SliceOfN(rapid.Uint(), N+1, N+1).Draw(t, "x")
+		t.Logf("x = %v", x)
+
+		iy := Reciprocal(y[len(y)-1])
+
+		// compute in result style
+		r := make([]uint, len(x))
+		q := DivideNormalStrictN1ByN(r, x, y, iy)
+		t.Logf("q = %v, r = %v", q, r)
+
+		// compute in accumulation style
+		r2 := make([]uint, len(x))
+		copy(r2, x)
+		q2 := DivideNormalStrictN1ByN(r2, r2, y, iy)
+		t.Logf("q2 = %v, r2 = %v", q2, r2)
+
+		// compare
+		if q != q2 {
+			t.Error("difference in quotient")
+		}
+		if !slices.Equal(r, r2) {
 			t.Error("difference in remainder")
 		}
 	})

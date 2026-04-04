@@ -193,13 +193,13 @@ func DivideNormal3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (quotient uin
 // DivideNormalStrictN1ByN permits aliasing remainder to x, in which case it becomes "divide accumulate".
 //
 // This implementation applies the "school" method described in Knuth, section 4.3.1, steps D3 through D6.
-func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint) (quotient uint) {
+func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quotient uint) {
 	xz := len(x)
 	yz := len(y)
 
 	// step D3: calculate q'
 	q_ := make([]uint, 2)
-	r_ := DivideNBy1(q_, x[xz-2:xz], y[yz-1])
+	r_ := DivideNormalNBy1(q_, x[xz-2:xz], y[yz-1], iy)
 	// invariant: q' - 2 ≤ quotient ≤ q' ≤ β+1
 	if q_[1] > 2 {
 		panic("invariant violation")
