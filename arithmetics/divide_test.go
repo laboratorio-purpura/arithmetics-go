@@ -147,34 +147,27 @@ func TestDivideNormal3By2WithReciprocal_Differential_Rapid(t *testing.T) {
 func TestDivideNormalN1ByN_Differential_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
+func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
 		N := rapid.IntRange(2, 31).Draw(t, "N")
-		t.Logf("N = %v", N)
-		yf := func(i []uint) bool {
-			return i[N-1]&(1<<Bits-1) != 0
+		y := rapid.SliceOfN(rapid.Uint(), N, N).Filter(IsNormal).Draw(t, "y")
+		isStrict := func(i []uint) bool {
+			return IsSmaller(i[1:N+1], y[:])
 		}
-		y := rapid.SliceOfN(rapid.Uint(), N, N).Filter(yf).Draw(t, "y")
-		t.Logf("y = %v", y)
-		xf := func(i []uint) bool {
-			yz := len(y)
-			mz := len(i) - yz
-			return IsSmaller(i[mz-1:mz+yz], y)
-		}
-		x := rapid.SliceOfN(rapid.Uint(), N+1, N+1).Filter(xf).Draw(t, "x")
-		t.Logf("x = %v", x)
+		x := rapid.SliceOfN(rapid.Uint(), N+1, N+1).Filter(isStrict).Draw(t, "x")
 
 		// compute with purple
 		r := make([]uint, len(x))
-		q := DivideNormalN1ByN(r, x, y)
-		t.Logf("q = %v, r = %v", q, r)
+		q := DivideNormalStrictN1ByN(r, x, y)
+		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
 		x_ := internal.ToBigInt(x)
 		y_ := internal.ToBigInt(y)
 		q_ := big.NewInt(0).Div(x_, y_)
 		r_ := big.NewInt(0).Mod(x_, y_)
-		t.Logf("q_ = %v, r_ = %v", q_, r_)
+		t.Logf("q_ = %X, r_ = %X", q_, r_)
 
 		// compare
 		if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {

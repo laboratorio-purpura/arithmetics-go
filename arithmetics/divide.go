@@ -82,6 +82,10 @@ func DivideNormalNBy1(quotient []uint, x []uint, y uint, iy uint) (remainder uin
 
 // DivideNBy1 computes the ratio of a multi-word integer by a one-word integer.
 //
+// DivideNBy1 requires:
+// y is nonzero;
+// otherwise, it gives the wrong result.
+//
 // DivideNBy1 adds into quotient the len(quotient) words of the result.
 // It permits aliasing quotient to x, in which case it becomes "divide and add".
 //
@@ -177,46 +181,46 @@ func DivideNormal3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (quotient uin
 	return q1, [2]uint{r0, r1}
 }
 
-// DivideNormalN1ByN computes the ratio of an (N+1)-word integer by a N-word integer.
+// DivideNormalStrictN1ByN computes the ratio of an (N+1)-word integer by a N-word integer.
 //
-// DivideNormalN1ByN requires:
-// len(y) > 1;
-// len(x) = len(y) + 1;
-// y is "normalised";
-// x[N-1:N+1] < y[N-1];
+// DivideNormalStrictN1ByN requires:
+// len(y) > 1,
+// len(x) = len(y) + 1,
+// y is normalized,
+// x[1:len(x)] < y;
 // otherwise, the result will be wrong.
 //
-// DivideNormalN1ByN permits aliasing remainder to x, in which case it becomes "divide accumulate".
+// DivideNormalStrictN1ByN permits aliasing remainder to x, in which case it becomes "divide accumulate".
 //
 // This implementation applies the "school" method described in Knuth, section 4.3.1, steps D3 through D6.
-// optimized by eliding a test in step D3.
-func DivideNormalN1ByN(remainder []uint, x []uint, y []uint) (quotient uint) {
+func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint) (quotient uint) {
 	xz := len(x)
 	yz := len(y)
 
 	// step D3: calculate q'
-	q_, r_ := bits.Div(x[xz-1], x[xz-2], y[yz-1])
-	// invariant: q' - 2 ≤ quotient ≤ q'
+	q_ := make([]uint, 2)
+	r_ := DivideNBy1(q_, x[xz-2:xz], y[yz-1])
+	// invariant: q' - 2 ≤ quotient ≤ q' ≤ β+1
+	if q_[1] > 2 {
+		panic("invariant violation")
+	}
 
 	// step D3: reduce q'
-	for {
-		// if q' >= β…
-		// but it will never,
-		// because we require x[N-1:N+1] < y[N-1] => x[N-1:N+1] / y[N-1] < β.
-
-		// or if q' × y[yz-2] > { x[yz-2], r' }…
+	test := func(q_ []uint, x []uint, y []uint, r_ uint) bool {
 		// let t0 = q' × y[yz-2]
-		var t0 [2]uint
-		t0[1], t0[0] = bits.Mul(q_, y[yz-2])
+		var t0 [3]uint
+		Multiply(t0[:], q_, y[yz-2:yz-1])
 		// let t1 = { x[yz-2], r' }
 		var t1 [2]uint
 		t1 = [2]uint{x[xz-2], r_}
-		if NotGreater(t0[:], t1[:]) {
-			break
-		}
-
+		// test q' × y[yz-2] > { x[yz-2], r' }
+		return IsGreater(t0[:], t1[:])
+	}
+	// if q' >= β…
+	// or if q' × y[yz-2] > { x[yz-2], r' }…
+	for q_[1] != 0 || test(q_, x, y, r_) {
 		// then fix q', r'
-		q_ = q_ - 1
+		_ = Subtract(q_, q_, []uint{1})
 		var carry uint
 		r_, carry = bits.Add(r_, y[yz-1], 0)
 
@@ -225,14 +229,17 @@ func DivideNormalN1ByN(remainder []uint, x []uint, y []uint) (quotient uint) {
 			break
 		}
 	}
-	// invariant: q' - 1 ≤ q ≤ q'
+	// invariant: q' - 1 ≤ q ≤ q' ≤ β
+	if q_[1] > 1 {
+		panic("invariant violated")
+	}
 
 	// step D4: multiply and subtract
 	var borrow uint
 	{
 		// let t = q' × y
-		t := make([]uint, yz+1)
-		Multiply(t, []uint{q_}, y)
+		t := make([]uint, yz+2)
+		Multiply(t, q_, y)
 		// remainder <- x - q' × y
 		borrow = Subtract(remainder, x, t)
 	}
@@ -240,10 +247,16 @@ func DivideNormalN1ByN(remainder []uint, x []uint, y []uint) (quotient uint) {
 	// step D5: test remainder
 	if borrow != 0 {
 		// step D6: add back
-		q_ = q_ - 1
+		_ = Subtract(q_, q_, []uint{1})
 		_ = Add(remainder, remainder, y)
 	}
-	// invariant: q' = q
+	// invariant: q' = q < β
+	if q_[1] != 0 {
+		panic("invariant violated")
+	}
+
+	return q_[0]
+}
 
 	return q_
 }
