@@ -12,54 +12,59 @@ import (
 	"testing"
 
 	"pgregory.net/rapid"
+	"purpura.dev.br/arithmetics/arithmetics/internal"
 )
 
-func TestAdd_Commutativity_Rapid(t *testing.T) {
+func TestAdd_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
+		// generate samples
 		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
 		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
-		rz := len(x) + len(y)
-		r1 := make([]uint, rz)
-		c1 := Add(r1, x, y)
-		r2 := make([]uint, rz)
-		c2 := Add(r2, y, x)
-		if !slices.Equal(r1, r2) {
-			t.Error("Sum(x,y) != Sum(y,x)")
-		}
-		if c1 != c2 {
-			t.Error("Sum(x,y) carry != Sum(y,x) carry")
+
+		// compute with purple
+		z := max(len(x), len(y)) + 1
+		sum := make([]uint, z)
+		sum[z-1] = Add(sum, x, y)
+		t.Logf("sum = %X", sum)
+
+		// compute with math/big
+		x_ := internal.ToBigInt(x)
+		y_ := internal.ToBigInt(y)
+		sum_ := big.NewInt(0).Add(x_, y_)
+		t.Logf("sum_ = %X", sum_)
+
+		// compare
+		if internal.ToBigInt(sum).Cmp(sum_) != 0 {
+			t.Error("difference in sum")
 		}
 	})
 }
 
-func TestAdd_Identity_Rapid(t *testing.T) {
+func TestAdd_Accumulate_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
+		// generate samples
 		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		identity := rapid.SliceOf(rapid.Just[uint](0)).Draw(t, "identity")
-		rz := len(x) + len(identity)
-		r := make([]uint, rz)
-		c := Add(r, x, identity)
-		if !AreEqual(r, x) {
-			t.Error("Sum(x,identity) != x")
-		}
-		if c != 0 {
-			t.Error("Sum(x,identity) carry != 0")
-		}
-	})
-}
+		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 
-func TestAdd_ResultLessThanPart_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOfN(rapid.UintMin(1), 1, -1).Draw(t, "x")
-		y := rapid.SliceOfN(rapid.UintMin(1), 1, -1).Draw(t, "y")
-		rz := len(x) + len(y) + 1
-		r := make([]uint, rz)
-		r[rz-1] = Add(r, x, y)
-		if IsSmaller(r, x) {
-			t.Error("Sum(x,y) < x")
+		z := max(len(x), len(y))
+
+		// compute in result style
+		sum1 := make([]uint, z)
+		carry1 := Add(sum1, x, y)
+		t.Logf("sum1 = %X, carry1 = %X", sum1, carry1)
+
+		// compute in accumulate style
+		sum2 := make([]uint, z)
+		copy(sum2, x)
+		carry2 := Add(sum2, sum2, y)
+		t.Logf("sum2 = %X, carry2 = %X", sum2, carry2)
+
+		// compare
+		if !slices.Equal(sum1, sum2) {
+			t.Error("difference in sum")
 		}
-		if IsSmaller(r, y) {
-			t.Error("Sum(x,y) < y")
+		if carry1 != carry2 {
+			t.Error("difference in carry")
 		}
 	})
 }

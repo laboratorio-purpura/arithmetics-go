@@ -4,42 +4,64 @@
 package arithmetics
 
 import (
+	"math/big"
+	"slices"
 	"testing"
 
 	"pgregory.net/rapid"
+	"purpura.dev.br/arithmetics/arithmetics/internal"
 )
 
-func TestSubtract_Identity_Rapid(t *testing.T) {
+func TestSubtract_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		identity := rapid.SliceOf(rapid.Just[uint](0)).Draw(t, "identity")
-		rz := max(len(x), len(identity))
-		r := make([]uint, rz)
-		b := Subtract(r, x, identity)
-		if !AreEqual(r, x) {
-			t.Errorf("Difference(x,identity) != x")
+		// generate samples
+		x := rapid.SliceOfN(rapid.Uint(), 1, -1).Draw(t, "x")
+		isSmaller := func(i []uint) bool {
+			return IsSmaller(i, x)
 		}
-		if b != 0 {
-			t.Errorf("Difference(x,identity) borrow != 0")
+		y := rapid.SliceOfN(rapid.Uint(), 1, -1).Filter(isSmaller).Draw(t, "y")
+		// TODO: test negative results
+
+		// compute with purple
+		difference := make([]uint, max(len(x), len(y)))
+		borrow := Subtract(difference, x, y)
+		t.Logf("difference = %X, borrow = %X", difference, borrow)
+
+		// compute with math/big
+		x_ := internal.ToBigInt(x)
+		y_ := internal.ToBigInt(y)
+		difference_ := big.NewInt(0).Sub(x_, y_)
+		t.Logf("difference_ = %X", difference_)
+
+		// compare
+		if internal.ToBigInt(difference).Cmp(difference_) != 0 {
+			t.Error("difference")
 		}
 	})
 }
 
-func TestSubtract_ResultLessThanPart_Rapid(t *testing.T) {
+func TestSubtract_Accumulate_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
-		rz := len(x) + len(y)
-		r := make([]uint, rz)
-		b := Subtract(r, x, y)
-		if b == 0 {
-			if IsGreater(r, x) {
-				t.Error("x >= y but Difference(x,y) > x")
-			}
-		} else {
-			if IsSmaller(r, x) {
-				t.Error("x < y but Difference(x,y) < x")
-			}
+		// generate samples
+		x := rapid.SliceOfN(rapid.Uint(), 1, -1).Draw(t, "x")
+		y := rapid.SliceOfN(rapid.Uint(), 1, -1).Draw(t, "y")
+
+		// compute in result style
+		result := make([]uint, max(len(x), len(y)))
+		borrow1 := Subtract(result, x, y)
+		t.Logf("difference = %X, borrow = %X", result, borrow1)
+
+		// compute in accumulate style
+		accumulator := make([]uint, max(len(x), len(y)))
+		copy(accumulator, x)
+		borrow2 := Subtract(accumulator, accumulator, y)
+
+		// compare
+		if !slices.Equal(result, accumulator) {
+			t.Error("difference in result")
+		}
+		if borrow1 != borrow2 {
+			t.Error("difference in borrow")
 		}
 	})
 }
