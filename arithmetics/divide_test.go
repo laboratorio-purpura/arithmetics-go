@@ -139,9 +139,6 @@ func TestDivideNormal3By2WithReciprocal_Differential_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivideNormalN1ByN_Differential_Rapid(t *testing.T) {
-	const Bits = bits.UintSize
-
 func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
