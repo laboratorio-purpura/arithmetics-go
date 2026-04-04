@@ -27,12 +27,12 @@ func Subtract(difference, x, y []uint) (borrow uint) {
 	}
 
 	// either propagate borrow through x
-	for i := z; i < xz; i++ {
+	for i := z; i < min(dz, xz); i++ {
 		difference[i], borrow = bits.Sub(x[i], 0, borrow)
 	}
 
 	// or propagate borrow through y
-	for i := z; i < yz; i++ {
+	for i := z; i < min(dz, yz); i++ {
 		difference[i], borrow = bits.Sub(0, y[i], borrow)
 	}
 

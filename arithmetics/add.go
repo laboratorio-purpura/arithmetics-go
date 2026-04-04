@@ -27,12 +27,12 @@ func Add(sum, x, y []uint) (carry uint) {
 	}
 
 	// either propagate carry through x
-	for i := z; i < xz; i++ {
+	for i := z; i < min(sz, xz); i++ {
 		sum[i], carry = bits.Add(x[i], 0, carry)
 	}
 
 	// or propagate carry through y
-	for i := z; i < yz; i++ {
+	for i := z; i < min(sz, yz); i++ {
 		sum[i], carry = bits.Add(0, y[i], carry)
 	}
 
