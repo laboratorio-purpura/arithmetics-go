@@ -171,10 +171,10 @@ func TestDivideNormal3By2_Differential_Rapid(t *testing.T) {
 func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
-		N := rapid.IntRange(2, 31).Draw(t, "N")
+		N := rapid.IntRange(2, 32).Draw(t, "N")
 		y := rapid.SliceOfN(rapid.Uint(), N, N).Filter(IsNormal).Draw(t, "y")
 		isStrict := func(i []uint) bool {
-			return IsSmaller(i[1:N+1], y[:])
+			return IsSmaller(i[1:], y[:])
 		}
 		x := rapid.SliceOfN(rapid.Uint(), N+1, N+1).Filter(isStrict).Draw(t, "x")
 

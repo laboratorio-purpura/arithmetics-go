@@ -225,7 +225,7 @@ func DivideNormal3By2(x [3]uint, y [2]uint, iy uint) (quotient [2]uint, remainde
 // len(y) > 1,
 // len(x) = len(y) + 1,
 // y is normalized,
-// x[1:len(x)] < y;
+// x[1:] < y;
 // otherwise, the result will be wrong.
 //
 // DivideNormalStrictN1ByN permits aliasing remainder to x, in which case it becomes "divide accumulate".
@@ -236,18 +236,17 @@ func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 	yz := len(y)
 
 	// step D3: calculate q'
-	q_ := make([]uint, 2)
-	r_ := DivideNormalNBy1(q_, x[xz-2:xz], y[yz-1], iy)
+	q_, r_ := DivideNormal2By1([2]uint(x[xz-2:xz]), y[yz-1], iy)
 	// invariant: q' - 2 ≤ quotient ≤ q' ≤ β+1
 	if q_[1] > 2 {
 		panic("invariant violation")
 	}
 
 	// step D3: reduce q'
-	test := func(q_ []uint, x []uint, y []uint, r_ uint) bool {
+	test := func(q_ [2]uint, x []uint, y []uint, r_ uint) bool {
 		// let t0 = q' × y[yz-2]
 		var t0 [3]uint
-		Multiply(t0[:], q_, y[yz-2:yz-1])
+		Multiply(t0[:], q_[:], y[yz-2:yz-1])
 		// let t1 = { x[yz-2], r' }
 		var t1 [2]uint
 		t1 = [2]uint{x[xz-2], r_}
@@ -258,7 +257,7 @@ func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 	// or if q' × y[yz-2] > { x[yz-2], r' }…
 	for q_[1] != 0 || test(q_, x, y, r_) {
 		// then fix q', r'
-		_ = Subtract(q_, q_, []uint{1})
+		_ = Subtract(q_[:], q_[:], []uint{1})
 		var carry uint
 		r_, carry = bits.Add(r_, y[yz-1], 0)
 
@@ -277,7 +276,7 @@ func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 	{
 		// let t = q' × y
 		t := make([]uint, yz+2)
-		Multiply(t, q_, y)
+		Multiply(t, q_[:], y)
 		// remainder <- x - q' × y
 		borrow = Subtract(remainder, x, t)
 	}
@@ -285,7 +284,7 @@ func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 	// step D5: test remainder
 	if borrow != 0 {
 		// step D6: add back
-		_ = Subtract(q_, q_, []uint{1})
+		_ = Subtract(q_[:], q_[:], []uint{1})
 		_ = Add(remainder, remainder, y)
 	}
 	// invariant: q' = q < β
