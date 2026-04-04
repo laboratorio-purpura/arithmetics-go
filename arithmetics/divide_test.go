@@ -43,20 +43,19 @@ func TestDivideNormalStrict2By1WithReciprocal_Differential_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivideNormalNBy1_Differential_Rapid(t *testing.T) {
+func TestDivideNormal2By1_Differential_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
 		y := rapid.UintMin(1<<(Bits-1)).Draw(t, "y")
 		t.Logf("y = %X", y)
-		x := rapid.SliceOfN(rapid.Uint(), 1, 32).Draw(t, "x")
+		x := rapid.SliceOfN(rapid.Uint(), 2, 2).Draw(t, "x")
 		t.Logf("x = %X", x)
 
 		// compute with purple
 		iy := Reciprocal(y)
-		q := make([]uint, len(x))
-		r := DivideNormalNBy1(q, x, y, iy)
+		q, r := DivideNormal2By1([2]uint(x), y, iy)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -67,7 +66,7 @@ func TestDivideNormalNBy1_Differential_Rapid(t *testing.T) {
 		t.Logf("q_ = %X, r_ = %X", q_, r_)
 
 		// compare
-		if internal.ToBigInt(q).Cmp(q_) != 0 {
+		if internal.ToBigInt(q[:]).Cmp(q_) != 0 {
 			t.Error("difference in quotient")
 		}
 		if big.NewInt(0).SetUint64(uint64(r)).Cmp(r_) != 0 {
@@ -106,7 +105,7 @@ func TestDivideNBy1_Differential_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivideNormal3By2WithReciprocal_Differential_Rapid(t *testing.T) {
+func TestDivideNormalStrict3By2_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
 		y := [2]uint(rapid.SliceOfN(rapid.Uint(), 2, 2).Filter(IsNormal).Draw(t, "y"))
@@ -119,7 +118,7 @@ func TestDivideNormal3By2WithReciprocal_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		iy := Reciprocal2(y)
-		q, r := DivideNormal3By2WithReciprocal(x, y, iy)
+		q, r := DivideNormalStrict3By2(x, y, iy)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -131,6 +130,36 @@ func TestDivideNormal3By2WithReciprocal_Differential_Rapid(t *testing.T) {
 
 		// compare
 		if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {
+			t.Error("difference in quotient")
+		}
+		if internal.ToBigInt(r[:]).Cmp(r_) != 0 {
+			t.Error("difference in remainder")
+		}
+	})
+}
+
+func TestDivideNormal3By2_Differential_Rapid(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		// generate samples
+		y := [2]uint(rapid.SliceOfN(rapid.Uint(), 2, 2).Filter(IsNormal).Draw(t, "y"))
+		t.Logf("y = %X", y)
+		x := [3]uint(rapid.SliceOfN(rapid.Uint(), 3, 3).Draw(t, "x"))
+		t.Logf("x = %X", x)
+
+		// compute with purple
+		iy := Reciprocal2(y)
+		q, r := DivideNormal3By2(x, y, iy)
+		t.Logf("q = %X, r = %X", q, r)
+
+		// compute with math/big
+		x_ := internal.ToBigInt(x[:])
+		y_ := internal.ToBigInt(y[:])
+		q_ := big.NewInt(0).Div(x_, y_)
+		r_ := big.NewInt(0).Mod(x_, y_)
+		t.Logf("q_ = %X, r_ = %X", q_, r_)
+
+		// compare
+		if internal.ToBigInt(q[:]).Cmp(q_) != 0 {
 			t.Error("difference in quotient")
 		}
 		if internal.ToBigInt(r[:]).Cmp(r_) != 0 {

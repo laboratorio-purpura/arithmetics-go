@@ -44,40 +44,41 @@ func DivideNormalStrict2By1(x [2]uint, y uint, iy uint) (quotient uint, remainde
 	return q1, r
 }
 
-// DivideNormalNBy1 computes the ratio of an N-word integer by a one-word integer.
+// DivideNormal2By1 computes the ratio of an N-word integer by a one-word integer.
 //
-// DivideNormalNBy1 requires:
+// DivideNormal2By1 requires:
 // y is normalized,
 // iy = Reciprocal(y);
 // otherwise, the result will be wrong.
 //
-// DivideNBy1 adds into quotient the len(quotient) words of the result.
+// DivideNormal2By1 adds into quotient the len(quotient) words of the result.
 // It permits aliasing quotient to x, in which case it becomes "divide and add".
 //
 // This implementation applies the "Improved division by invariant integers" method.
-func DivideNormalNBy1(quotient []uint, x []uint, y uint, iy uint) (remainder uint) {
-	xz := len(x)
-
-	if len(quotient) < xz {
-		panic("")
+func DivideNormal2By1(x [2]uint, y uint, iy uint) (quotient [2]uint, remainder uint) {
+	// "restricted" dividend buffer
+	const tz = 3
+	var t [tz]uint
+	copy(t[:], x[:])
+	// invariant: t[2] < y
+	if !(t[2] < y) {
+		panic("invariant violation")
 	}
-
-	// dividend buffer
-	tz := xz + 1
-	t := make([]uint, tz)
-	copy(t, x)
-	// invariant: t[tz-1] < y
 
 	// compute quotient and remainder, word by word
-	for i := tz - 1; i > 0; i-- {
-		x_ := [2]uint(t[i-1 : i+1])
-		// invariant: x_[i] < y
-		q, r := DivideNormalStrict2By1(x_, y, iy)
-		quotient[i-1] += q
-		t[i-1] = r
+	quotient[1], t[1] = DivideNormalStrict2By1([2]uint(t[1:3]), y, iy)
+	// invariant: t[1] < y
+	if !(t[1] < y) {
+		panic("invariant violation")
 	}
+	quotient[0], t[0] = DivideNormalStrict2By1([2]uint(t[0:2]), y, iy)
+	// invariant: t[0] < y
+	if !(t[0] < y) {
+		panic("invariant violation")
+	}
+	remainder = t[0]
 
-	return t[0]
+	return
 }
 
 // DivideNBy1 computes the ratio of a multi-word integer by a one-word integer.
@@ -135,16 +136,16 @@ func DivideNBy1(quotient []uint, x []uint, y uint) (remainder uint) {
 	return
 }
 
-// DivideNormal3By2WithReciprocal computes the ratio of a three-word integer by a two-word integer.
+// DivideNormalStrict3By2 computes the ratio of a three-word integer by a two-word integer.
 //
-// Requires:
-// y is "normalised";
-// iy == Reciprocal2(y);
-// x[2:3] < y;
+// DivideNormalStrict3By2 requires:
+// y is normalized,
+// iy = Reciprocal2(y),
+// x[1:3] < y;
 // otherwise, the result will be wrong.
 //
 // This implementation applies the "Improved division by invariant integers" method.
-func DivideNormal3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (quotient uint, remainder [2]uint) {
+func DivideNormalStrict3By2(x [3]uint, y [2]uint, iy uint) (quotient uint, remainder [2]uint) {
 	// 1. <q1,q0> ← v.u2
 	q1, q0 := bits.Mul(iy, x[2])
 	// 2. <q1,q0> ← <q1,q0> + <u2,u1>
@@ -179,6 +180,43 @@ func DivideNormal3By2WithReciprocal(x [3]uint, y [2]uint, iy uint) (quotient uin
 		r1, _ = bits.Sub(r1, y[1], borrow)
 	}
 	return q1, [2]uint{r0, r1}
+}
+
+// DivideNormal3By2 computes the ratio of a three-word integer by a two-word integer.
+//
+// DivideNormal3By2 requires:
+// y is normalized,
+// iy = Reciprocal2(y);
+// otherwise, the result will be wrong.
+//
+// This implementation applies the "Improved division by invariant integers" method.
+func DivideNormal3By2(x [3]uint, y [2]uint, iy uint) (quotient [2]uint, remainder [2]uint) {
+	// "restricted" dividend buffer
+	const tz = 4
+	var t [tz]uint
+	copy(t[:], x[:])
+	// invariant: t[2:4] < y
+	if NotSmaller(t[2:4], y[:]) {
+		panic("invariant violation")
+	}
+
+	// compute quotient and remainder, word by word
+	var r [2]uint
+	quotient[1], r = DivideNormalStrict3By2([3]uint(t[1:4]), y, iy)
+	copy(t[1:3], r[:])
+	// invariant: t[1:3] < y
+	if NotSmaller(t[1:3], y[:]) {
+		panic("invariant violation")
+	}
+	quotient[0], r = DivideNormalStrict3By2([3]uint(t[0:3]), y, iy)
+	copy(t[0:2], r[:])
+	// invariant: t[0] < y
+	if NotSmaller(t[0:2], y[:]) {
+		panic("invariant violation")
+	}
+	copy(remainder[:], t[0:2])
+
+	return
 }
 
 // DivideNormalStrictN1ByN computes the ratio of an (N+1)-word integer by a N-word integer.
