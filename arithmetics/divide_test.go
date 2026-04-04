@@ -107,19 +107,14 @@ func TestDivideNBy1_Differential_Rapid(t *testing.T) {
 }
 
 func TestDivideNormal3By2WithReciprocal_Differential_Rapid(t *testing.T) {
-	const Bits = bits.UintSize
-
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
-		yf := func(i []uint) bool {
-			return i[1]&(1<<(Bits-1)) != 0
-		}
-		y := [2]uint(rapid.SliceOfN(rapid.Uint(), 2, 2).Filter(yf).Draw(t, "y"))
+		y := [2]uint(rapid.SliceOfN(rapid.Uint(), 2, 2).Filter(IsNormal).Draw(t, "y"))
 		t.Logf("y = %X", y)
-		xf := func(i []uint) bool {
+		isStrict := func(i []uint) bool {
 			return IsSmaller(i[1:3], y[:])
 		}
-		x := [3]uint(rapid.SliceOfN(rapid.Uint(), 3, 3).Filter(xf).Draw(t, "x"))
+		x := [3]uint(rapid.SliceOfN(rapid.Uint(), 3, 3).Filter(isStrict).Draw(t, "x"))
 		t.Logf("x = %X", x)
 
 		// compute with purple
