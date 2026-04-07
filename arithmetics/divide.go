@@ -225,18 +225,21 @@ func DivideNormal3By2(x [3]uint, y [2]uint, iy uint) (quotient [2]uint, remainde
 // len(y) > 1,
 // len(x) = len(y) + 1,
 // y is normalized,
+// iy = Reciprocal(y),
 // x[1:] < y;
 // otherwise, the result will be wrong.
 //
-// DivideNormalStrictN1ByN permits aliasing remainder to x, in which case it becomes "divide accumulate".
+// DivideNormalStrictN1ByN permits aliasing remainder to x.
 //
-// This implementation applies the "school" method described in Knuth, section 4.3.1, steps D3 through D6.
+// This implementation applies the "school" method described in Knuth, section 4.3.1, steps D3 through D6,
+// enhanced by the "Improved division by invariant integers" at step D3.
 func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quotient uint) {
-	xz := len(x)
 	yz := len(y)
 
 	// step D3: calculate q'
-	q_, r_ := DivideNormal2By1([2]uint(x[xz-2:xz]), y[yz-1], iy)
+	// q' ← ( u[j+n]×β + u[j+n-1] ) ÷ y[n-1]
+	// r' ← ( u[j+n]×β + u[j+n-1] ) % y[n-1]
+	q_, r_ := DivideNormal2By1([2]uint(x[yz-1:]), y[yz-1], iy)
 	// invariant: q' - 2 ≤ quotient ≤ q' ≤ β+1
 	if q_[1] > 2 {
 		panic("invariant violation")
@@ -244,23 +247,21 @@ func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 
 	// step D3: reduce q'
 	test := func(q_ [2]uint, x []uint, y []uint, r_ uint) bool {
-		// let t0 = q' × y[yz-2]
+		// let t0 = q' × v[n-2]
 		var t0 [3]uint
 		Multiply(t0[:], q_[:], y[yz-2:yz-1])
-		// let t1 = { x[yz-2], r' }
+		// let t1 = r'×β + u[j+n-2]
 		var t1 [2]uint
-		t1 = [2]uint{x[xz-2], r_}
-		// test q' × y[yz-2] > { x[yz-2], r' }
+		t1 = [2]uint{x[yz-2], r_}
+		// test q' × v[n-2] > r'×β + u[j+n-2]
 		return IsGreater(t0[:], t1[:])
 	}
-	// if q' >= β…
-	// or if q' × y[yz-2] > { x[yz-2], r' }…
+	// if q' >= β or q' × v[n-2] > r'×β + u[j+n-2]
 	for q_[1] != 0 || test(q_, x, y, r_) {
 		// then fix q', r'
 		_ = Subtract(q_[:], q_[:], []uint{1})
 		var carry uint
 		r_, carry = bits.Add(r_, y[yz-1], 0)
-
 		// if r' < β, repeat
 		if carry != 0 {
 			break
@@ -277,7 +278,7 @@ func DivideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 		// let t = q' × y
 		t := make([]uint, yz+2)
 		Multiply(t, q_[:], y)
-		// remainder <- x - q' × y
+		// remainder ← x - q' × y
 		borrow = Subtract(remainder, x, t)
 	}
 
