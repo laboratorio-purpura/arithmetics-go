@@ -27,7 +27,7 @@ func TestDivideNormalStrict2By1_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		iy := Reciprocal(y)
-		q, r := DivideNormalStrict2By1([2]uint(x), y, iy)
+		q, r := divideNormalStrict2By1([2]uint(x), y, iy)
 		t.Logf("q = %v, r = %v", q, r)
 
 		// compute with math/bits
@@ -44,39 +44,7 @@ func TestDivideNormalStrict2By1_Differential_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivideNormal2By1_Differential_Rapid(t *testing.T) {
-	const Bits = bits.UintSize
-
-	rapid.Check(t, func(t *rapid.T) {
-		// generate samples
-		y := rapid.UintMin(1<<(Bits-1)).Draw(t, "y")
-		t.Logf("y = %X", y)
-		x := rapid.SliceOfN(rapid.Uint(), 2, 2).Draw(t, "x")
-		t.Logf("x = %X", x)
-
-		// compute with purple
-		iy := Reciprocal(y)
-		q, r := DivideNormal2By1([2]uint(x), y, iy)
-		t.Logf("q = %X, r = %X", q, r)
-
-		// compute with math/big
-		x_ := internal.ToBigInt(x)
-		y_ := big.NewInt(0).SetUint64(uint64(y))
-		q_ := big.NewInt(0).Div(x_, y_)
-		r_ := big.NewInt(0).Mod(x_, y_)
-		t.Logf("q_ = %X, r_ = %X", q_, r_)
-
-		// compare
-		if internal.ToBigInt(q[:]).Cmp(q_) != 0 {
-			t.Error("difference in quotient")
-		}
-		if big.NewInt(0).SetUint64(uint64(r)).Cmp(r_) != 0 {
-			t.Error("difference in remainder")
-		}
-	})
-}
-
-func TestDivideNBy1_Differential_Rapid(t *testing.T) {
+func TestDivideBy1_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
 		y := rapid.UintMin(1).Draw(t, "y1")
@@ -86,7 +54,7 @@ func TestDivideNBy1_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		q := make([]uint, len(x))
-		r := DivideNBy1(q, x, y)
+		r := DivideBy1(q, x, y)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -119,7 +87,7 @@ func TestDivideNormalStrict3By2_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		iy := Reciprocal2(y)
-		q, r := DivideNormalStrict3By2(x, y, iy)
+		q, r := divideNormalStrict3By2(x, y, iy)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -134,69 +102,6 @@ func TestDivideNormalStrict3By2_Differential_Rapid(t *testing.T) {
 			t.Error("difference in quotient")
 		}
 		if internal.ToBigInt(r[:]).Cmp(r_) != 0 {
-			t.Error("difference in remainder")
-		}
-	})
-}
-
-func TestDivideNormal3By2_Differential_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		// generate samples
-		y := [2]uint(rapid.SliceOfN(rapid.Uint(), 2, 2).Filter(IsNormal).Draw(t, "y"))
-		t.Logf("y = %X", y)
-		x := [3]uint(rapid.SliceOfN(rapid.Uint(), 3, 3).Draw(t, "x"))
-		t.Logf("x = %X", x)
-
-		// compute with purple
-		iy := Reciprocal2(y)
-		q, r := DivideNormal3By2(x, y, iy)
-		t.Logf("q = %X, r = %X", q, r)
-
-		// compute with math/big
-		x_ := internal.ToBigInt(x[:])
-		y_ := internal.ToBigInt(y[:])
-		q_ := big.NewInt(0).Div(x_, y_)
-		r_ := big.NewInt(0).Mod(x_, y_)
-		t.Logf("q_ = %X, r_ = %X", q_, r_)
-
-		// compare
-		if internal.ToBigInt(q[:]).Cmp(q_) != 0 {
-			t.Error("difference in quotient")
-		}
-		if internal.ToBigInt(r[:]).Cmp(r_) != 0 {
-			t.Error("difference in remainder")
-		}
-	})
-}
-
-func TestDivideNormalStrictN1ByN_SmallDifferential_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		// generate samples
-		N := rapid.Just(3).Draw(t, "N")
-		y := rapid.SliceOfN(rapid.Uint(), N, N).Filter(IsNormal).Draw(t, "y")
-		isStrict := func(i []uint) bool {
-			return IsSmaller(i[1:], y[:])
-		}
-		x := rapid.SliceOfN(rapid.Uint(), N+1, N+1).Filter(isStrict).Draw(t, "x")
-
-		// compute with purple
-		iy := Reciprocal(y[len(y)-1])
-		r := make([]uint, len(x))
-		q := DivideNormalStrictN1ByN(r, x, y, iy)
-		t.Logf("q = %X, r = %X", q, r)
-
-		// compute with math/big
-		x_ := internal.ToBigInt(x)
-		y_ := internal.ToBigInt(y)
-		q_ := big.NewInt(0).Div(x_, y_)
-		r_ := big.NewInt(0).Mod(x_, y_)
-		t.Logf("q_ = %X, r_ = %X", q_, r_)
-
-		// compare
-		if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {
-			t.Error("difference in quotient")
-		}
-		if internal.ToBigInt(r).Cmp(r_) != 0 {
 			t.Error("difference in remainder")
 		}
 	})
@@ -219,7 +124,7 @@ func TestDivideNormalStrictN1ByN(t *testing.T) {
 
 			iy := Reciprocal(it.y[len(it.y)-1])
 			r := make([]uint, len(it.y))
-			q := DivideNormalStrictN1ByN(r, it.x, it.y, iy)
+			q := divideNormalStrictN1ByN(r, it.x, it.y, iy)
 			t.Logf("q = %X", q)
 			t.Logf("r = %X", r)
 
@@ -253,7 +158,7 @@ func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 		// compute with purple
 		iy := Reciprocal(y[len(y)-1])
 		r := make([]uint, len(x))
-		q := DivideNormalStrictN1ByN(r, x, y, iy)
+		q := divideNormalStrictN1ByN(r, x, y, iy)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -290,17 +195,16 @@ func TestDivideNormalStrictN1ByN_Accumulate_Rapid(t *testing.T) {
 
 		// compute in result style
 		r1 := make([]uint, len(x))
-		q1 := DivideNormalStrictN1ByN(r1, x, y, iy)
+		q1 := divideNormalStrictN1ByN(r1, x, y, iy)
 		t.Logf("q = %v, r = %v", q1, r1)
 
 		// compute in accumulation style
 		r2 := make([]uint, len(x))
 		copy(r2, x)
-		q2 := DivideNormalStrictN1ByN(r2, r2, y, iy)
+		q2 := divideNormalStrictN1ByN(r2, r2, y, iy)
 		t.Logf("q2 = %v, r2 = %v", q2, r2)
 
 		// compare
-		if q != q2 {
 		if q1 != q2 {
 			t.Error("difference in quotient")
 		}
@@ -309,9 +213,32 @@ func TestDivideNormalStrictN1ByN_Accumulate_Rapid(t *testing.T) {
 		}
 	})
 }
+
+func TestDivide_Differential_Rapid(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		// generate samples
+		y := rapid.SliceOfN(rapid.Uint(), 2, 32).Filter(IsCompact).Filter(NotZero).Draw(t, "y")
+		x := rapid.SliceOfN(rapid.Uint(), 0, 32).Draw(t, "x")
+
+		// compute with purple
+		q := make([]uint, len(x))
+		r := make([]uint, len(y))
+		Divide(q, r, x, y)
+		t.Logf("q = %X, r = %X", q, r)
+
+		// compute with math/big
+		x_ := internal.ToBigInt(x)
+		y_ := internal.ToBigInt(y)
+		t.Logf("x_ = %X, y_ = %X", x_, y_)
+		q_ := big.NewInt(0).Div(x_, y_)
+		r_ := big.NewInt(0).Mod(x_, y_)
+		t.Logf("q_ = %X, r_ = %X", q_, r_)
+
+		// compare
+		if internal.ToBigInt(q).Cmp(q_) != 0 {
 			t.Error("difference in quotient")
 		}
-		if !slices.Equal(r, r2) {
+		if internal.ToBigInt(r).Cmp(r_) != 0 {
 			t.Error("difference in remainder")
 		}
 	})
