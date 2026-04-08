@@ -8,7 +8,7 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestReciprocalWord32_Differential_Rapid(t *testing.T) {
+func TestReciprocal_Differential_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
 	rapid.Check(t, func(t *rapid.T) {
@@ -43,30 +43,21 @@ func TestReciprocalWord32_Differential_Rapid(t *testing.T) {
 	})
 }
 
-func TestReciprocalWords32_Differential_Rapid(t *testing.T) {
+func TestReciprocal2_Differential_Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 
 	rapid.Check(t, func(t *rapid.T) {
-		y0 := rapid.Uint().Draw(t, "y0")
-		y1 := rapid.UintMin(1<<(Bits-1)).Draw(t, "y1")
-		y := [2]uint{y0, y1}
+		y := normalLongInteger(rapid.Uint(), 2, 2).Draw(t, "y")
 		t.Logf("y = %X", y)
 
-		iy := Reciprocal2(y)
+		iy := Reciprocal2([2]uint(y))
 		t.Logf("iy = %X", iy)
 
 		// y_ = y0 | y1 << Bits
-		y_ := big.NewInt(0).SetUint64(uint64(y0))
-		y_ = y_.Add(
-			y_,
-			big.NewInt(0).Lsh(
-				big.NewInt(0).SetUint64(uint64(y1)),
-				Bits,
-			),
-		)
+		y_ := toBigInt(y)
 		t.Logf("y_ = %X", y_)
 
-		// by definition: iy_ ((β^3 − 1) ÷ y) − β
+		// by definition: iy_ = ((β^3 − 1) ÷ y) − β
 		_1 := big.NewInt(1)
 		β := big.NewInt(0).Lsh(_1, Bits)
 		β3 := big.NewInt(0).Lsh(_1, Bits*3)
@@ -82,5 +73,40 @@ func TestReciprocalWords32_Differential_Rapid(t *testing.T) {
 		if iy_.Uint64() != uint64(iy) {
 			t.Error("iy_ ≠ iy")
 		}
+	})
+}
+
+func BenchmarkReciprocal(b *testing.B) {
+	rng := newRand()
+
+	// generate samples
+	y := rng.Uint()
+	y = y | (1 << (bits.UintSize - 1))
+
+	// measure purple
+	b.Run("purple", func(b *testing.B) {
+		var iy uint
+		for b.Loop() {
+			iy = Reciprocal(y)
+		}
+		_ = iy
+	})
+}
+
+func BenchmarkReciprocal2(b *testing.B) {
+	rng := newRand()
+
+	// generate samples
+	var y [2]uint
+	y[0] = rng.Uint()
+	y[1] = rng.Uint() | (1 << (bits.UintSize - 1))
+
+	// measure purple
+	b.Run("purple", func(b *testing.B) {
+		var iy uint
+		for b.Loop() {
+			iy = Reciprocal2(y)
+		}
+		_ = iy
 	})
 }

@@ -8,6 +8,26 @@ The `arithmetics-go` library contains procedures for arithmetics with "long" non
 
 This is an educational project with the purpose of learning and sharing algorithmic mathematics.
 
+Run correctness tests:
+
+[source,shell]
+----
+go test ./arithmetics -rapid.checks=1_000
+----
+
+NOTE: The `-rapid.checks` parameter defines the number of random samples verified by each test.
+
+Run performance tests:
+
+[source,shell]
+----
+go test ./arithmetics -bench .
+----
+
+These should compare this library against the standard library.
+
+NOTE: You must use Go 1.26+ for realistic results; see notes on `B.Loop` in link:https://go.dev/doc/go1.26#testingpkgtesting[]
+
 == References
 
 * Donald E. Knuth, "The Art of Computer Programming", volume 2, "Seminumerical Algorithms", third edition, ISBN 0-201-89684-2

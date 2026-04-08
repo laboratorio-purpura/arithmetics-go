@@ -8,6 +8,26 @@ A biblioteca `arithmetics-go` contém rotinas para aritmética com inteiros não
 
 Este é um projeto educacional com o propósito de aprendizado e compartilhamento de matemática algorítmica.
 
+Para executar os testes de corretude:
+
+[source,shell]
+----
+go test ./arithmetics -rapid.checks=1_000
+----
+
+NOTE: A opção `-rapid.checks` define a quantidade de amostras aleatórias verificadas por cada teste.
+
+Para executar os testes de desempenho:
+
+[source,shell]
+----
+go test ./arithmetics -bench .
+----
+
+Isso deve testar esta biblioca contra a biblioteca padrão.
+
+NOTE: Você deve usar Go 1.26+ para resultados realistas; veja as notas sobre `B.Loop` em link:https://go.dev/doc/go1.26#testingpkgtesting[]
+
 == Referências
 
 * Donald E. Knuth, "The Art of Computer Programming", volume 2, "Seminumerical Algorithms", third edition, ISBN 0-201-89684-2

@@ -4,9 +4,9 @@
 package arithmetics
 
 import (
+	"fmt"
 	"math/big"
 	"math/bits"
-	"math/rand/v2"
 	"testing"
 
 	"pgregory.net/rapid"
@@ -50,34 +50,34 @@ func TestDouble_Differential_Rapid(t *testing.T) {
 }
 
 func BenchmarkDouble(b *testing.B) {
-	// generate samples
-	rng := rand.New(rand.NewPCG(31, 39))
-	x := make([]uint, 32)
-	for i := range x {
-		x[i] = rng.Uint()
-	}
-	y := rng.UintN(uint(bits.UintSize - 1))
+	rng := newRand()
 
-	// measure purple
-	b.Run("purple", func(b *testing.B) {
-		t := make([]uint, len(x)+1)
-		for b.Loop() {
-			t[len(t)-1] = Double(t, x, y)
+	for _, words := range []uint{8, 16, 32, 64, 128, 256} {
+		// generate samples
+		x := make([]uint, words)
+		for i := range x {
+			x[i] = rng.Uint()
 		}
-	})
+		y := rng.UintN(uint(bits.UintSize - 1))
 
-	// translate samples to math/big
-	x_ := big.NewInt(0)
-	for i := len(x); i > 0; i-- {
-		w := big.NewInt(0).SetUint64(uint64(x[i-1]))
-		x_.Lsh(x_, bits.UintSize).Add(x_, w)
+		// measure purple
+		b.Run(fmt.Sprint("purple-", words), func(b *testing.B) {
+			twice := make([]uint, words)
+			var excess uint
+			for b.Loop() {
+				excess = Double(twice, x, y)
+			}
+			_, _ = twice, excess
+		})
+
+		// measure math/big
+		b.Run(fmt.Sprint("math-big-", words), func(b *testing.B) {
+			x_ := toBigInt(x)
+			twice := big.NewInt(0)
+			for b.Loop() {
+				twice.Lsh(x_, y)
+			}
+			_ = twice
+		})
 	}
-
-	// measure math/big
-	b.Run("math/big", func(b *testing.B) {
-		t := big.NewInt(0)
-		for b.Loop() {
-			t.Lsh(x_, y)
-		}
-	})
 }

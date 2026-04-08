@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"pgregory.net/rapid"
-	"purpura.dev.br/arithmetics/arithmetics/internal"
 )
 
 func TestDivideNormalStrict2By1_Differential_Rapid(t *testing.T) {
@@ -58,14 +57,14 @@ func TestDivideBy1_Differential_Rapid(t *testing.T) {
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
-		x_ := internal.ToBigInt(x)
+		x_ := toBigInt(x)
 		y_ := big.NewInt(0).SetUint64(uint64(y))
 		q_ := big.NewInt(0).Div(x_, y_)
 		r_ := big.NewInt(0).Mod(x_, y_)
 		t.Logf("q_ = %X, r_ = %X", q_, r_)
 
 		// compare
-		if internal.ToBigInt(q).Cmp(q_) != 0 {
+		if toBigInt(q).Cmp(q_) != 0 {
 			t.Error("difference in quotient")
 		}
 		if big.NewInt(0).SetUint64(uint64(r)).Cmp(r_) != 0 {
@@ -77,7 +76,7 @@ func TestDivideBy1_Differential_Rapid(t *testing.T) {
 func TestDivideNormalStrict3By2_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
-		y := [2]uint(rapid.SliceOfN(rapid.Uint(), 2, 2).Filter(IsNormal).Draw(t, "y"))
+		y := [2]uint(normalLongInteger(rapid.Uint(), 2, 2).Draw(t, "y"))
 		t.Logf("y = %X", y)
 		isStrict := func(i []uint) bool {
 			return IsSmaller(i[1:3], y[:])
@@ -91,8 +90,8 @@ func TestDivideNormalStrict3By2_Differential_Rapid(t *testing.T) {
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
-		x_ := internal.ToBigInt(x[:])
-		y_ := internal.ToBigInt(y[:])
+		x_ := toBigInt(x[:])
+		y_ := toBigInt(y[:])
 		q_ := big.NewInt(0).Div(x_, y_)
 		r_ := big.NewInt(0).Mod(x_, y_)
 		t.Logf("q_ = %X, r_ = %X", q_, r_)
@@ -101,7 +100,7 @@ func TestDivideNormalStrict3By2_Differential_Rapid(t *testing.T) {
 		if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {
 			t.Error("difference in quotient")
 		}
-		if internal.ToBigInt(r[:]).Cmp(r_) != 0 {
+		if toBigInt(r[:]).Cmp(r_) != 0 {
 			t.Error("difference in remainder")
 		}
 	})
@@ -128,8 +127,8 @@ func TestDivideNormalStrictN1ByN(t *testing.T) {
 			t.Logf("q = %X", q)
 			t.Logf("r = %X", r)
 
-			x_ := internal.ToBigInt(it.x)
-			y_ := internal.ToBigInt(it.y)
+			x_ := toBigInt(it.x)
+			y_ := toBigInt(it.y)
 			q_ := big.NewInt(0).Div(x_, y_)
 			r_ := big.NewInt(0).Mod(x_, y_)
 			t.Logf("q_ = %X", q_)
@@ -138,7 +137,7 @@ func TestDivideNormalStrictN1ByN(t *testing.T) {
 			if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {
 				t.Error("difference in quotient")
 			}
-			if internal.ToBigInt(r).Cmp(r_) != 0 {
+			if toBigInt(r).Cmp(r_) != 0 {
 				t.Error("difference in remainder")
 			}
 		})
@@ -149,7 +148,7 @@ func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
 		N := rapid.IntRange(2, 32).Draw(t, "N")
-		y := rapid.SliceOfN(rapid.Uint(), N, N).Filter(IsNormal).Draw(t, "y")
+		y := normalLongInteger(rapid.Uint(), N, N).Draw(t, "y")
 		isStrict := func(i []uint) bool {
 			return IsSmaller(i[1:], y[:])
 		}
@@ -162,8 +161,8 @@ func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
-		x_ := internal.ToBigInt(x)
-		y_ := internal.ToBigInt(y)
+		x_ := toBigInt(x)
+		y_ := toBigInt(y)
 		q_ := big.NewInt(0).Div(x_, y_)
 		r_ := big.NewInt(0).Mod(x_, y_)
 		t.Logf("q_ = %X, r_ = %X", q_, r_)
@@ -172,7 +171,7 @@ func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 		if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {
 			t.Error("difference in quotient")
 		}
-		if internal.ToBigInt(r).Cmp(r_) != 0 {
+		if toBigInt(r).Cmp(r_) != 0 {
 			t.Error("difference in remainder")
 		}
 	})
@@ -183,7 +182,7 @@ func TestDivideNormalStrictN1ByN_Accumulate_Rapid(t *testing.T) {
 		// generate samples
 		N := rapid.IntRange(2, 32).Draw(t, "N")
 		t.Logf("N = %v", N)
-		y := rapid.SliceOfN(rapid.Uint(), N, N).Filter(IsNormal).Draw(t, "y")
+		y := normalLongInteger(rapid.Uint(), N, N).Filter(IsNormal).Draw(t, "y")
 		t.Logf("y = %v", y)
 		isStrict := func(i []uint) bool {
 			return IsSmaller(i[1:], y[:])
@@ -227,19 +226,180 @@ func TestDivide_Differential_Rapid(t *testing.T) {
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
-		x_ := internal.ToBigInt(x)
-		y_ := internal.ToBigInt(y)
+		x_ := toBigInt(x)
+		y_ := toBigInt(y)
 		t.Logf("x_ = %X, y_ = %X", x_, y_)
 		q_ := big.NewInt(0).Div(x_, y_)
 		r_ := big.NewInt(0).Mod(x_, y_)
 		t.Logf("q_ = %X, r_ = %X", q_, r_)
 
 		// compare
-		if internal.ToBigInt(q).Cmp(q_) != 0 {
+		if toBigInt(q).Cmp(q_) != 0 {
 			t.Error("difference in quotient")
 		}
-		if internal.ToBigInt(r).Cmp(r_) != 0 {
+		if toBigInt(r).Cmp(r_) != 0 {
 			t.Error("difference in remainder")
 		}
 	})
+}
+
+func BenchmarkDivideNormalStrict2By1(b *testing.B) {
+	const Bits = bits.UintSize
+	rng := newRand()
+
+	// generate samples
+	y := rng.Uint()
+	y |= 1 << (Bits - 1)
+	var x [2]uint
+	x[0] = rng.Uint()
+	x[1] = rng.Uint()
+	if x[1] >= y {
+		x[1] = x[1] - y
+	}
+
+	// measure purple
+	b.Run("purple", func(b *testing.B) {
+		iy := Reciprocal(y)
+		var q, r uint
+		for b.Loop() {
+			q, r = divideNormalStrict2By1(x, y, iy)
+		}
+		_, _ = q, r
+	})
+
+	// measure bits
+	b.Run("bits", func(b *testing.B) {
+		var q, r uint
+		for b.Loop() {
+			q, r = bits.Div(x[1], x[0], y)
+		}
+		_, _ = q, r
+	})
+}
+
+func BenchmarkDivideNormalStrict3By2(b *testing.B) {
+	const Bits = bits.UintSize
+	rng := newRand()
+
+	// generate samples
+	var y [2]uint
+	y[0] = rng.Uint()
+	y[1] = rng.Uint()
+	y[1] |= 1 << (Bits - 1)
+	var x [3]uint
+	x[0] = rng.Uint()
+	x[1] = rng.Uint()
+	x[2] = rng.Uint()
+	if NotSmaller(x[1:], y[:]) {
+		_ = Subtract(x[1:], x[1:], y[:])
+	}
+
+	// measure purple
+	b.Run("purple", func(b *testing.B) {
+		iy := Reciprocal2(y)
+		var q uint
+		var r [2]uint
+		for b.Loop() {
+			q, r = divideNormalStrict3By2(x, y, iy)
+		}
+		_, _ = q, r
+	})
+
+	// measure math/big
+	b.Run("math/big", func(b *testing.B) {
+		x_ := toBigInt(x[:])
+		y_ := toBigInt(y[:])
+		q := big.NewInt(0)
+		r := big.NewInt(0)
+		for b.Loop() {
+			q, r = q.DivMod(x_, y_, r)
+		}
+		_, _ = q, r
+	})
+}
+
+func BenchmarkDivideNormalStrictN1ByN(b *testing.B) {
+	const Bits = bits.UintSize
+	rng := newRand()
+
+	for _, N := range []uint{8, 16, 32, 64, 128, 256} {
+		// generate samples
+		y := make([]uint, N)
+		for i := range y {
+			y[i] = rng.Uint()
+		}
+		y[N-1] |= 1 << (Bits - 1)
+		x := make([]uint, N+1)
+		for i := range x {
+			x[i] = rng.Uint()
+		}
+		if NotSmaller(x[1:], y[:]) {
+			_ = Subtract(x[1:], x[1:], y[:])
+		}
+
+		// measure purple
+		b.Run(fmt.Sprint("purple-", N), func(b *testing.B) {
+			iy := Reciprocal(y[N-1])
+			var q uint
+			r := make([]uint, N)
+			for b.Loop() {
+				q = divideNormalStrictN1ByN(r[:], x[:], y[:], iy)
+			}
+			_, _ = q, r
+		})
+
+		// measure math/big
+		b.Run(fmt.Sprint("math-big-", N), func(b *testing.B) {
+			x_ := toBigInt(x[:])
+			y_ := toBigInt(y[:])
+			q := big.NewInt(0)
+			r := big.NewInt(0)
+			for b.Loop() {
+				q, r = q.DivMod(x_, y_, r)
+			}
+			_, _ = q, r
+		})
+	}
+}
+
+func BenchmarkDivide(b *testing.B) {
+	const Bits = bits.UintSize
+	rng := newRand()
+
+	for _, N := range []uint{8, 16, 32, 64, 128, 256} {
+		// generate samples
+		y := make([]uint, N)
+		for i := range y {
+			y[i] = rng.Uint()
+		}
+		for y[N-1] == 0 {
+			y[N-1] = rng.Uint()
+		}
+		x := make([]uint, N)
+		for i := range x {
+			x[i] = rng.Uint()
+		}
+
+		// measure purple
+		b.Run(fmt.Sprint("purple-", N), func(b *testing.B) {
+			q := make([]uint, N)
+			r := make([]uint, N)
+			for b.Loop() {
+				Divide(q[:], r[:], x[:], y[:])
+			}
+			_, _ = q, r
+		})
+
+		// measure math/big
+		b.Run(fmt.Sprint("math-big-", N), func(b *testing.B) {
+			x_ := toBigInt(x[:])
+			y_ := toBigInt(y[:])
+			q := big.NewInt(0)
+			r := big.NewInt(0)
+			for b.Loop() {
+				q, r = q.DivMod(x_, y_, r)
+			}
+			_, _ = q, r
+		})
+	}
 }

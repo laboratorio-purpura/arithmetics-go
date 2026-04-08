@@ -1,49 +1,70 @@
-// SPDX-FileCopyrightText: 2026 Pedro Lamarão <pedro.lamarao@purpura.dev.br>
+// Copyright (c) 2026 Pedro Lamarão <pedro.lamarao@purpura.dev.br>
 // SPDX-License-Identifier: GPL-3.0-only
 
 package arithmetics
 
 import (
-	"math/big"
-	"math/bits"
+	"fmt"
 	"testing"
 
 	"pgregory.net/rapid"
 )
 
 func TestIsGreater_Differential_Rapid(t *testing.T) {
-	const Bits = bits.UintSize
-
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples
 		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
 		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 
 		// compute with purple
-		r := IsGreater(x, y)
-		t.Logf("r = %v", r)
-
-		// translate samples to math/big
-		x_ := big.NewInt(0)
-		for i := len(x); i > 0; i-- {
-			x_.Lsh(x_, Bits)
-			x_.Add(x_, big.NewInt(0).SetUint64(uint64(x[i-1])))
-		}
-		t.Logf("x_ = %v", x_)
-		y_ := big.NewInt(0)
-		for i := len(y); i > 0; i-- {
-			y_.Lsh(y_, Bits)
-			y_.Add(y_, big.NewInt(0).SetUint64(uint64(y[i-1])))
-		}
-		t.Logf("y_ = %v", y_)
+		greater := IsGreater(x, y)
+		t.Logf("greater = %v", greater)
 
 		// compute with math/big
-		r_ := y_.Cmp(x_) < 0
-		t.Logf("r_ = %v", r_)
+		x_ := toBigInt(x)
+		y_ := toBigInt(y)
+		greater_ := x_.CmpAbs(y_) > 0
+		t.Logf("greater_ = %v", greater_)
 
 		// compare
-		if r_ != r {
-			t.Errorf("r_ != r")
+		if greater != greater {
+			t.Error("difference in result")
 		}
 	})
+}
+
+func BenchmarkIsGreater(b *testing.B) {
+	rng := newRand()
+
+	for _, words := range []uint{8, 16, 32, 64, 128, 256} {
+		// generate samples
+		x := make([]uint, words)
+		for i := range x {
+			x[i] = rng.Uint()
+		}
+		y := make([]uint, words)
+		for i := range y {
+			y[i] = rng.Uint()
+		}
+
+		// measure purple
+		b.Run(fmt.Sprint("purple-", words), func(b *testing.B) {
+			var equals bool
+			for b.Loop() {
+				equals = IsGreater(x, y)
+			}
+			_ = equals
+		})
+
+		// measure math/big
+		b.Run(fmt.Sprint("math-big-", words), func(b *testing.B) {
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			var equals bool
+			for b.Loop() {
+				equals = x_.CmpAbs(y_) > 0
+			}
+			_ = equals
+		})
+	}
 }

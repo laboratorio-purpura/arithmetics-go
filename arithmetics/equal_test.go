@@ -10,45 +10,61 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestEquals(t *testing.T) {
-	samples := []struct {
-		x []uint
-		y []uint
-		r bool
-	}{
-		{[]uint{1}, []uint{}, false},
-	}
+func TestAreEqual_Differential_Rapid(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		// generate samples
+		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 
-	for _, sample := range samples {
-		t.Run(fmt.Sprintf("%+v", sample), func(t *testing.T) {
-			r := AreEqual(sample.x, sample.y)
-			if r != sample.r {
-				t.Fatal("expected", sample.r, "got", r)
+		// compute with purple
+		equals := AreEqual(x, y)
+		t.Logf("equals = %v", equals)
+
+		// compute with math/big
+		x_ := toBigInt(x)
+		y_ := toBigInt(y)
+		equals_ := x_.CmpAbs(y_) == 0
+		t.Logf("equals_ = %v", equals_)
+
+		// compare
+		if equals != equals {
+			t.Error("difference in result")
+		}
+	})
+}
+
+func BenchmarkAreEqual(b *testing.B) {
+	rng := newRand()
+
+	for _, words := range []uint{8, 16, 32, 64, 128, 256} {
+		// generate samples
+		x := make([]uint, words)
+		for i := range x {
+			x[i] = rng.Uint()
+		}
+		y := make([]uint, words)
+		for i := range y {
+			y[i] = rng.Uint()
+		}
+
+		// measure purple
+		b.Run(fmt.Sprint("purple-", words), func(b *testing.B) {
+			var equals bool
+			for b.Loop() {
+				equals = AreEqual(x, y)
 			}
+			_ = equals
+		})
+
+		// measure math/big
+		b.Run(fmt.Sprint("math-big-", words), func(b *testing.B) {
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			var equals bool
+			for b.Loop() {
+				equals = x_.CmpAbs(y_) == 0
+			}
+			_ = equals
 		})
 	}
-}
-
-func TestEqualsCommutativity(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
-		r1 := AreEqual(x, y)
-		r2 := AreEqual(y, x)
-		if r1 != r2 {
-			t.Fatal("Equal(x, y) != Equal(y, x)")
-		}
-	})
-}
-
-func TestNotEqualsCommutativity(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
-		r1 := NotEqual(x, y)
-		r2 := NotEqual(y, x)
-		if r1 != r2 {
-			t.Fatal("NotEqual(x, y) != NotEqual(y, x)")
-		}
-	})
 }

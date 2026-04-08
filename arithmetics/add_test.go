@@ -6,13 +6,11 @@ package arithmetics
 import (
 	"fmt"
 	"math/big"
-	"math/bits"
 	"math/rand/v2"
 	"slices"
 	"testing"
 
 	"pgregory.net/rapid"
-	"purpura.dev.br/arithmetics/arithmetics/internal"
 )
 
 func TestAdd_Differential_Rapid(t *testing.T) {
@@ -28,13 +26,13 @@ func TestAdd_Differential_Rapid(t *testing.T) {
 		t.Logf("sum = %X", sum)
 
 		// compute with math/big
-		x_ := internal.ToBigInt(x)
-		y_ := internal.ToBigInt(y)
+		x_ := toBigInt(x)
+		y_ := toBigInt(y)
 		sum_ := big.NewInt(0).Add(x_, y_)
 		t.Logf("sum_ = %X", sum_)
 
 		// compare
-		if internal.ToBigInt(sum).Cmp(sum_) != 0 {
+		if toBigInt(sum).Cmp(sum_) != 0 {
 			t.Error("difference in sum")
 		}
 	})
@@ -82,32 +80,25 @@ func BenchmarkAdd(b *testing.B) {
 			y[i] = rng.Uint()
 		}
 
-		// translate samples to math/big
-		x_ := big.NewInt(0)
-		for i := len(x); i > 0; i-- {
-			w := big.NewInt(0).SetUint64(uint64(x[i-1]))
-			x_.Lsh(x_, bits.UintSize).Add(x_, w)
-		}
-		y_ := big.NewInt(0)
-		for i := len(y); i > 0; i-- {
-			w := big.NewInt(0).SetUint64(uint64(y[i-1]))
-			y_.Lsh(y_, bits.UintSize).Add(y_, w)
-		}
-
 		// measure purple
-		b.Run(fmt.Sprint("purple", words), func(b *testing.B) {
-			t := make([]uint, words)
+		b.Run(fmt.Sprint("purple-", words), func(b *testing.B) {
+			sum := make([]uint, words)
+			var carry uint
 			for b.Loop() {
-				Add(t, x, y)
+				carry = Add(sum, x, y)
 			}
+			_, _ = sum, carry
 		})
 
 		// measure math/big
 		b.Run(fmt.Sprint("math-big-", words), func(b *testing.B) {
-			t := big.NewInt(0)
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			sum := big.NewInt(0)
 			for b.Loop() {
-				t.Add(x_, y_)
+				sum.Add(x_, y_)
 			}
+			_ = sum
 		})
 	}
 }

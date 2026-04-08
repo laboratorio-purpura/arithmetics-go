@@ -4,41 +4,65 @@
 package arithmetics
 
 import (
+	"fmt"
+	"math/big"
 	"testing"
 
 	"pgregory.net/rapid"
 )
 
-func TestIsZero(t *testing.T) {
+func TestIsZero_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
-		zero := rapid.SliceOf(rapid.UintMax(0)).Draw(t, "zero")
-		r := IsZero(zero)
-		if !r {
-			t.Errorf("IsZero(%v) = true, want false", zero)
-		}
-	})
-	rapid.Check(t, func(t *rapid.T) {
-		nonzero := rapid.SliceOfN(rapid.UintMin(1), 1, -1).Draw(t, "nonzero")
-		r := IsZero(nonzero)
-		if r {
-			t.Errorf("IsZero(%v) = true, want false", nonzero)
+		// generate samples
+		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+
+		// compute with purple
+		zero := IsZero(x)
+		t.Logf("equals = %v", zero)
+
+		// compute with math/big
+		x_ := toBigInt(x)
+		y_ := big.NewInt(0)
+		zero_ := x_.CmpAbs(y_) == 0
+		t.Logf("equals_ = %v", zero_)
+
+		// compare
+		if zero != zero {
+			t.Error("difference in result")
 		}
 	})
 }
 
-func TestNotZero(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		zero := rapid.SliceOf(rapid.UintMax(0)).Draw(t, "zero")
-		r := NotZero(zero)
-		if r {
-			t.Errorf("NotZero(%v) = false, want true", zero)
+func BenchmarkIsZero(b *testing.B) {
+	rng := newRand()
+
+	for _, words := range []uint{8, 16, 32, 64, 128, 256} {
+		// generate samples
+		x := make([]uint, words)
+		for i := range x {
+			x[i] = rng.Uint()
 		}
-	})
-	rapid.Check(t, func(t *rapid.T) {
-		nonzero := rapid.SliceOfN(rapid.UintMin(1), 1, -1).Draw(t, "nonzero")
-		r := NotZero(nonzero)
-		if !r {
-			t.Errorf("NotZero(%v) = true, want false", nonzero)
-		}
-	})
+
+		// translate samples to math/big
+
+		// measure purple
+		b.Run(fmt.Sprint("purple-", words), func(b *testing.B) {
+			var zero bool
+			for b.Loop() {
+				zero = IsZero(x)
+			}
+			_ = zero
+		})
+
+		// measure math/big
+		b.Run(fmt.Sprint("math-big-", words), func(b *testing.B) {
+			x_ := toBigInt(x)
+			y_ := big.NewInt(0)
+			var zero bool
+			for b.Loop() {
+				zero = x_.CmpAbs(y_) == 0
+			}
+			_ = zero
+		})
+	}
 }

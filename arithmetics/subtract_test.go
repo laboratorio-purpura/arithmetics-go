@@ -4,12 +4,12 @@
 package arithmetics
 
 import (
+	"fmt"
 	"math/big"
 	"slices"
 	"testing"
 
 	"pgregory.net/rapid"
-	"purpura.dev.br/arithmetics/arithmetics/internal"
 )
 
 func TestSubtract_Differential_Rapid(t *testing.T) {
@@ -28,13 +28,13 @@ func TestSubtract_Differential_Rapid(t *testing.T) {
 		t.Logf("difference = %X, borrow = %X", difference, borrow)
 
 		// compute with math/big
-		x_ := internal.ToBigInt(x)
-		y_ := internal.ToBigInt(y)
+		x_ := toBigInt(x)
+		y_ := toBigInt(y)
 		difference_ := big.NewInt(0).Sub(x_, y_)
 		t.Logf("difference_ = %X", difference_)
 
 		// compare
-		if internal.ToBigInt(difference).Cmp(difference_) != 0 {
+		if toBigInt(difference).Cmp(difference_) != 0 {
 			t.Error("difference")
 		}
 	})
@@ -64,4 +64,41 @@ func TestSubtract_Accumulate_Rapid(t *testing.T) {
 			t.Error("difference in borrow")
 		}
 	})
+}
+
+func BenchmarkSubtract(b *testing.B) {
+	rng := newRand()
+
+	for _, words := range []uint{8, 16, 32, 64, 128, 256} {
+		// generate samples
+		x := make([]uint, words)
+		for i := range x {
+			x[i] = rng.Uint()
+		}
+		y := make([]uint, words)
+		for i := range y {
+			y[i] = rng.Uint()
+		}
+
+		// measure purple
+		b.Run(fmt.Sprint("purple-", words), func(b *testing.B) {
+			difference := make([]uint, words)
+			var borrow uint
+			for b.Loop() {
+				borrow = Subtract(difference, x, y)
+			}
+			_, _ = difference, borrow
+		})
+
+		// measure math/big
+		b.Run(fmt.Sprint("math-big-", words), func(b *testing.B) {
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			difference := big.NewInt(0)
+			for b.Loop() {
+				difference = difference.Sub(x_, y_)
+			}
+			_ = difference
+		})
+	}
 }
