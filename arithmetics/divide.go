@@ -166,13 +166,13 @@ func divideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 	var r_ uint
 	q_[1], r_ = divideNormalStrict2By1([2]uint{x[yz], r_}, y[yz-1], iy)
 	q_[0], r_ = divideNormalStrict2By1([2]uint{x[yz-1], r_}, y[yz-1], iy)
-	// invariant: q' - 2 ≤ quotient ≤ q' ≤ β+1
+	// invariant: q' - 2 ≤ quotient ≤ q' ≤ β
 
 	// step D3: reduce q'
 	test := func(q_ [2]uint, x []uint, y []uint, r_ uint) bool {
 		// let t0 = q' × v[n-2]
-		var t0 [3]uint
-		Multiply(t0[:], q_[:], y[yz-2:yz-1])
+		var t0 [2]uint
+		t0[1], t0[0] = bits.Mul(q_[0], y[yz-2])
 		// let t1 = r'×β + u[j+n-2]
 		var t1 [2]uint
 		t1 = [2]uint{x[yz-2], r_}
@@ -190,14 +190,14 @@ func divideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 			break
 		}
 	}
-	// invariant: q' - 1 ≤ q ≤ q' ≤ β
+	// invariant: q' - 1 ≤ q ≤ q' < β
 
 	// step D4: multiply and subtract
 	var borrow uint
 	{
 		// let t = q' × y
-		t := make([]uint, yz+2)
-		Multiply(t, q_[:], y)
+		t := make([]uint, yz+1)
+		t[yz] = MultiplyBy1(t, y, q_[0])
 		// remainder ← x - q' × y
 		borrow = Subtract(remainder, x, t)
 	}
@@ -205,10 +205,10 @@ func divideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 	// step D5: test remainder
 	if borrow != 0 {
 		// step D6: add back
-		_ = Subtract(q_[:], q_[:], []uint{1})
+		q_[0], _ = bits.Sub(q_[0], 1, 0)
 		_ = Add(remainder, remainder, y)
 	}
-	// invariant: q' = q < β
+	// invariant: q' = q
 
 	return q_[0]
 }
