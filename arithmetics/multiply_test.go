@@ -11,6 +11,30 @@ import (
 	"pgregory.net/rapid"
 )
 
+func TestMultiplyBy1_Differential_Rapid(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		// generate samples
+		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+		y := rapid.Uint().Draw(t, "y")
+
+		// compute with purple
+		product := make([]uint, len(x)+1)
+		product[len(x)] = MultiplyBy1(product, x, y)
+		t.Logf("product = %X", product)
+
+		// compute with math/big
+		x_ := toBigInt(x)
+		y_ := big.NewInt(0).SetUint64(uint64(y))
+		product_ := big.NewInt(0).Mul(x_, y_)
+		t.Logf("product_ = %X", product_)
+
+		// compare
+		if toBigInt(product).Cmp(product_) != 0 {
+			t.Error("difference in product")
+		}
+	})
+}
+
 func TestMultiply_Differential_Rapid(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		// generate samples

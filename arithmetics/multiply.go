@@ -7,6 +7,26 @@ import (
 	"math/bits"
 )
 
+func MultiplyBy1(product []uint, x []uint, y uint) (excess uint) {
+	xz := len(x)
+	pz := len(product)
+
+	z := min(xz, pz)
+
+	for i := 0; i < z; i++ {
+		// x[i] × y[j] + excess
+		p1, p0 := bits.Mul(x[i], y)
+		var carry uint
+		p0, carry = bits.Add(p0, excess, 0)
+		p1, _ = bits.Add(p1, 0, carry)
+		// store low word, propagate high word
+		product[i], carry = bits.Add(product[i], p0, 0)
+		excess, _ = bits.Add(p1, 0, carry)
+	}
+
+	return
+}
+
 // Multiply computes the product of two integers.
 //
 // Multiply adds into product the len(product) least significant words of the result.
