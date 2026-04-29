@@ -2,13 +2,13 @@ package arithmetics
 
 import "math/bits"
 
-// Halve computes half (to a power) of an integer.
+// Half computes half (to a power) of an integer.
 //
-// Halve stores into quotient the len(quotient) least significant words of the result.
+// Half stores into quotient the len(quotient) least significant words of the result.
 // It permits aliasing quotient to x, in which case it becomes "halve accumulate".
 //
 // This implementation applies the "binary shift" method.
-func Halve(quotient []uint, x []uint, y uint) (remainder uint) {
+func Half(quotient []uint, x []uint, y uint) (remainder uint) {
 	const Bits = bits.UintSize
 
 	qz := len(quotient)

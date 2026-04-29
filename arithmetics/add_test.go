@@ -22,7 +22,7 @@ func TestAdd_Differential_Rapid(t *testing.T) {
 		// compute with purple
 		z := max(len(x), len(y)) + 1
 		sum := make([]uint, z)
-		sum[z-1] = Add(sum, x, y)
+		sum[z-1] = Sum(sum, x, y)
 		t.Logf("sum = %X", sum)
 
 		// compute with math/big
@@ -48,13 +48,13 @@ func TestAdd_Accumulate_Rapid(t *testing.T) {
 
 		// compute in result style
 		sum1 := make([]uint, z)
-		carry1 := Add(sum1, x, y)
+		carry1 := Sum(sum1, x, y)
 		t.Logf("sum1 = %X, carry1 = %X", sum1, carry1)
 
 		// compute in accumulate style
 		sum2 := make([]uint, z)
 		copy(sum2, x)
-		carry2 := Add(sum2, sum2, y)
+		carry2 := Sum(sum2, sum2, y)
 		t.Logf("sum2 = %X, carry2 = %X", sum2, carry2)
 
 		// compare
@@ -85,7 +85,7 @@ func BenchmarkAdd(b *testing.B) {
 			sum := make([]uint, words)
 			var carry uint
 			for b.Loop() {
-				carry = Add(sum, x, y)
+				carry = Sum(sum, x, y)
 			}
 			_, _ = sum, carry
 		})

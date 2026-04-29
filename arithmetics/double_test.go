@@ -25,7 +25,7 @@ func TestDouble_Differential_Rapid(t *testing.T) {
 		// compute with purple
 		rz := len(x) + 1
 		r := make([]uint, rz)
-		r[rz-1] = Double(r, x, y)
+		r[rz-1] = Twice(r, x, y)
 		t.Logf("r: %X", r)
 
 		// translate samples to math/big
@@ -65,7 +65,7 @@ func BenchmarkDouble(b *testing.B) {
 			twice := make([]uint, words)
 			var excess uint
 			for b.Loop() {
-				excess = Double(twice, x, y)
+				excess = Twice(twice, x, y)
 			}
 			_, _ = twice, excess
 		})

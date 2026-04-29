@@ -19,7 +19,7 @@ func TestMultiplyBy1_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		product := make([]uint, len(x)+1)
-		product[len(x)] = MultiplyBy1(product, x, y)
+		product[len(x)] = ProductBy1(product, x, y)
 		t.Logf("product = %X", product)
 
 		// compute with math/big
@@ -43,7 +43,7 @@ func TestMultiply_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		product := make([]uint, len(x)+len(y))
-		Multiply(product, x, y)
+		Product(product, x, y)
 		t.Logf("product = %X", product)
 
 		// compute with math/big
@@ -77,7 +77,7 @@ func BenchmarkMultiply(b *testing.B) {
 		b.Run(fmt.Sprint("purple-", words), func(b *testing.B) {
 			product := make([]uint, words*2)
 			for b.Loop() {
-				Multiply(product, x, y)
+				Product(product, x, y)
 			}
 			_ = product
 		})

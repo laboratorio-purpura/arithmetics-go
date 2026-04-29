@@ -25,7 +25,7 @@ func TestHalve_Differential_Rapid(t *testing.T) {
 		// compute with purple
 		rz := len(x)
 		r := make([]uint, rz)
-		Halve(r, x, y)
+		Half(r, x, y)
 		t.Logf("r: %X", r)
 
 		// translate samples to math/big
@@ -64,7 +64,7 @@ func BenchmarkHalve(b *testing.B) {
 		b.Run(fmt.Sprint("purple-", words), func(b *testing.B) {
 			t := make([]uint, words)
 			for b.Loop() {
-				Halve(t, x, y)
+				Half(t, x, y)
 			}
 		})
 

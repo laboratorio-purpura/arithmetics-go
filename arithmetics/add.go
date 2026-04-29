@@ -5,13 +5,13 @@ package arithmetics
 
 import "math/bits"
 
-// Add computes the sum of two integers.
+// Sum computes the sum of two integers.
 //
-// Add stores into sum the len(sum) least significant words of the result.
+// Sum stores into sum the len(sum) least significant words of the result.
 // It permits aliasing sum to x, in which case it becomes "add accumulate".
 //
 // This implementation applies the "school" method described in Knuth, section 4.3.1.
-func Add(sum, x, y []uint) (carry uint) {
+func Sum(sum, x, y []uint) (carry uint) {
 	sz := len(sum)
 	xz := len(x)
 	yz := len(y)

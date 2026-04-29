@@ -7,7 +7,7 @@ import (
 	"math/bits"
 )
 
-// divideNormalStrict2By1 computes the ratio of a two-word integer by a one-word integer.
+// divisionNormalStrict2By1 computes the ratio of a two-word integer by a one-word integer.
 //
 // Requires:
 // y is normalized,
@@ -16,7 +16,7 @@ import (
 // otherwise, the result will be wrong.
 //
 // This implementation applies the "Improved division by invariant integers" method.
-func divideNormalStrict2By1(x [2]uint, y uint, iy uint) (quotient uint, remainder uint) {
+func divisionNormalStrict2By1(x [2]uint, y uint, iy uint) (quotient uint, remainder uint) {
 	// 1. <q1, q0> ← v.u1
 	q1, q0 := bits.Mul(x[1], iy)
 	// 2. <q1, q0> ← <q1, q0> + <u1, u0>
@@ -44,17 +44,17 @@ func divideNormalStrict2By1(x [2]uint, y uint, iy uint) (quotient uint, remainde
 	return q1, r
 }
 
-// DivideBy1 computes the ratio of a multi-word integer by a one-word integer.
+// DivisionBy1 computes the ratio of a multi-word integer by a one-word integer.
 //
-// DivideBy1 requires:
+// DivisionBy1 requires:
 // y is nonzero;
 // otherwise, it gives the wrong result.
 //
-// DivideBy1 adds into quotient the len(quotient) words of the result.
+// DivisionBy1 adds into quotient the len(quotient) words of the result.
 // It permits aliasing quotient to x, in which case it becomes "divide and add".
 //
 // This implementation applies the "Improved division by invariant integers" method.
-func DivideBy1(quotient []uint, x []uint, y uint) (remainder uint) {
+func DivisionBy1(quotient []uint, x []uint, y uint) (remainder uint) {
 	qz := len(quotient)
 	xz := len(x)
 
@@ -74,7 +74,7 @@ func DivideBy1(quotient []uint, x []uint, y uint) (remainder uint) {
 	// normalize operands
 	factor := uint(bits.LeadingZeros(y))
 	y = y << factor
-	_ = Double(t, t, factor)
+	_ = Twice(t, t, factor)
 	// invariant: t did not overflow
 
 	// compute reciprocal approximation
@@ -84,7 +84,7 @@ func DivideBy1(quotient []uint, x []uint, y uint) (remainder uint) {
 	for i := tz - 1; i > 0; i-- {
 		x_ := [2]uint(t[i-1 : i+1])
 		// invariant: x_[i] < y
-		q, r := divideNormalStrict2By1(x_, y, iy)
+		q, r := divisionNormalStrict2By1(x_, y, iy)
 		quotient[i-1] += q
 		t[i-1] = r
 	}
@@ -96,16 +96,16 @@ func DivideBy1(quotient []uint, x []uint, y uint) (remainder uint) {
 	return
 }
 
-// divideNormalStrict3By2 computes the ratio of a three-word integer by a two-word integer.
+// divisionNormalStrict3By2 computes the ratio of a three-word integer by a two-word integer.
 //
-// divideNormalStrict3By2 requires:
+// divisionNormalStrict3By2 requires:
 // y is normalized,
 // iy = Reciprocal2(y[1:]),
 // x[1:3] < y;
 // otherwise, the result will be wrong.
 //
 // This implementation applies the "Improved division by invariant integers" method.
-func divideNormalStrict3By2(x [3]uint, y [2]uint, iy uint) (quotient uint, remainder [2]uint) {
+func divisionNormalStrict3By2(x [3]uint, y [2]uint, iy uint) (quotient uint, remainder [2]uint) {
 	// 1. <q1,q0> ← v.u2
 	q1, q0 := bits.Mul(iy, x[2])
 	// 2. <q1,q0> ← <q1,q0> + <u2,u1>
@@ -142,9 +142,9 @@ func divideNormalStrict3By2(x [3]uint, y [2]uint, iy uint) (quotient uint, remai
 	return q1, [2]uint{r0, r1}
 }
 
-// divideNormalStrictN1ByN computes the ratio of an (N+1)-word integer by a N-word integer.
+// divisionNormalStrictN1ByN computes the ratio of an (N+1)-word integer by a N-word integer.
 //
-// divideNormalStrictN1ByN requires:
+// divisionNormalStrictN1ByN requires:
 // len(y) > 1,
 // len(x) = len(y) + 1,
 // y is normalized,
@@ -152,11 +152,11 @@ func divideNormalStrict3By2(x [3]uint, y [2]uint, iy uint) (quotient uint, remai
 // x[1:] < y;
 // otherwise, the result will be wrong.
 //
-// divideNormalStrictN1ByN permits aliasing remainder to x.
+// divisionNormalStrictN1ByN permits aliasing remainder to x.
 //
 // This implementation applies the "school" method described in Knuth, section 4.3.1, steps D3 through D6,
 // enhanced by the "Improved division by invariant integers" at step D3.
-func divideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quotient uint) {
+func divisionNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quotient uint) {
 	yz := len(y)
 
 	// step D3: calculate q'
@@ -164,8 +164,8 @@ func divideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 	// r' ← ( u[j+n]×β + u[j+n-1] ) % y[n-1]
 	var q_ [2]uint
 	var r_ uint
-	q_[1], r_ = divideNormalStrict2By1([2]uint{x[yz], r_}, y[yz-1], iy)
-	q_[0], r_ = divideNormalStrict2By1([2]uint{x[yz-1], r_}, y[yz-1], iy)
+	q_[1], r_ = divisionNormalStrict2By1([2]uint{x[yz], r_}, y[yz-1], iy)
+	q_[0], r_ = divisionNormalStrict2By1([2]uint{x[yz-1], r_}, y[yz-1], iy)
 	// invariant: q' - 2 ≤ quotient ≤ q' ≤ β
 
 	// step D3: reduce q'
@@ -182,7 +182,7 @@ func divideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 	// if q' >= β or q' × v[n-2] > r'×β + u[j+n-2]
 	for q_[1] != 0 || test(q_, x, y, r_) {
 		// then fix q', r'
-		_ = Subtract(q_[:], q_[:], []uint{1})
+		_ = Difference(q_[:], q_[:], []uint{1})
 		var carry uint
 		r_, carry = bits.Add(r_, y[yz-1], 0)
 		// if r' < β, repeat
@@ -197,23 +197,23 @@ func divideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 	{
 		// let t = q' × y
 		t := make([]uint, yz+1)
-		t[yz] = MultiplyBy1(t, y, q_[0])
+		t[yz] = ProductBy1(t, y, q_[0])
 		// remainder ← x - q' × y
-		borrow = Subtract(remainder, x, t)
+		borrow = Difference(remainder, x, t)
 	}
 
 	// step D5: test remainder
 	if borrow != 0 {
 		// step D6: add back
 		q_[0], _ = bits.Sub(q_[0], 1, 0)
-		_ = Add(remainder, remainder, y)
+		_ = Sum(remainder, remainder, y)
 	}
 	// invariant: q' = q
 
 	return q_[0]
 }
 
-// Divide computes the ratio of an M-word integer by an N-word integer.
+// Division computes the ratio of an M-word integer by an N-word integer.
 //
 // Requires:
 // y is compact;
@@ -222,7 +222,7 @@ func divideNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (quo
 //
 // This implementation applies the "school" method described in Knuth, section 4.3.1,
 // enhanced by the "Improved division by invariant integers".
-func Divide(quotient []uint, remainder []uint, x []uint, y []uint) {
+func Division(quotient []uint, remainder []uint, x []uint, y []uint) {
 	qz := len(quotient)
 	rz := len(remainder)
 	xz := len(x)
@@ -239,7 +239,7 @@ func Divide(quotient []uint, remainder []uint, x []uint, y []uint) {
 	}
 
 	if yz == 1 {
-		remainder[0] = DivideBy1(quotient, x, y[0])
+		remainder[0] = DivisionBy1(quotient, x, y[0])
 		return
 	}
 
@@ -255,8 +255,8 @@ func Divide(quotient []uint, remainder []uint, x []uint, y []uint) {
 
 	// normalize operands
 	factor := uint(bits.LeadingZeros(y[yz-1]))
-	_ = Double(y, y, factor)
-	_ = Double(t, t, factor)
+	_ = Twice(y, y, factor)
+	_ = Twice(t, t, factor)
 	// invariant: t did not overflow
 
 	// compute reciprocal approximation of topmost dividend word
@@ -266,12 +266,12 @@ func Divide(quotient []uint, remainder []uint, x []uint, y []uint) {
 	for i := tz - yz; i > 0; i-- {
 		x_ := t[i-1 : i+yz]
 		// invariant: x_[1:] < y
-		quotient[i-1] += divideNormalStrictN1ByN(x_, x_, y, iy)
+		quotient[i-1] += divisionNormalStrictN1ByN(x_, x_, y, iy)
 	}
 
 	// denormalize operands
-	_ = Halve(y, y, factor)
-	_ = Halve(remainder, t, factor)
+	_ = Half(y, y, factor)
+	_ = Half(remainder, t, factor)
 	// invariant: remainder did not underflow
 
 	return

@@ -5,13 +5,13 @@ package arithmetics
 
 import "math/bits"
 
-// Subtract computes the difference between two integers.
+// Difference computes the difference between two integers.
 //
-// Subtract stores into difference the len(difference) least significant words of the result.
+// Difference stores into difference the len(difference) least significant words of the result.
 // It permits aliasing difference to x, in which case it becomes "subtract accumulate".
 //
 // This implementation applies the "school" method described in Knuth, section 4.3.1.
-func Subtract(difference, x, y []uint) (borrow uint) {
+func Difference(difference, x, y []uint) (borrow uint) {
 	dz := len(difference)
 	xz := len(x)
 	yz := len(y)

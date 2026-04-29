@@ -5,13 +5,13 @@ package arithmetics
 
 import "math/bits"
 
-// Double computes twice (to a power) of an integer.
+// Twice computes twice (to a power) of an integer.
 //
-// Double adds into product the len(product) least significant words of the result.
+// Twice adds into product the len(product) least significant words of the result.
 // It permits aliasing product to x, in which case it becomes "double accumulate".
 //
 // This implementation applies the "binary shift" method.
-func Double(product []uint, x []uint, y uint) (excess uint) {
+func Twice(product []uint, x []uint, y uint) (excess uint) {
 	const Bits = bits.UintSize
 
 	pz := len(product)

@@ -24,7 +24,7 @@ func TestSubtract_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		difference := make([]uint, max(len(x), len(y)))
-		borrow := Subtract(difference, x, y)
+		borrow := Difference(difference, x, y)
 		t.Logf("difference = %X, borrow = %X", difference, borrow)
 
 		// compute with math/big
@@ -48,13 +48,13 @@ func TestSubtract_Accumulate_Rapid(t *testing.T) {
 
 		// compute in result style
 		result := make([]uint, max(len(x), len(y)))
-		borrow1 := Subtract(result, x, y)
+		borrow1 := Difference(result, x, y)
 		t.Logf("difference = %X, borrow = %X", result, borrow1)
 
 		// compute in accumulate style
 		accumulator := make([]uint, max(len(x), len(y)))
 		copy(accumulator, x)
-		borrow2 := Subtract(accumulator, accumulator, y)
+		borrow2 := Difference(accumulator, accumulator, y)
 
 		// compare
 		if !slices.Equal(result, accumulator) {
@@ -85,7 +85,7 @@ func BenchmarkSubtract(b *testing.B) {
 			difference := make([]uint, words)
 			var borrow uint
 			for b.Loop() {
-				borrow = Subtract(difference, x, y)
+				borrow = Difference(difference, x, y)
 			}
 			_, _ = difference, borrow
 		})

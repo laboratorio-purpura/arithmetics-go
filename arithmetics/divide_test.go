@@ -26,7 +26,7 @@ func TestDivideNormalStrict2By1_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		iy := Reciprocal(y)
-		q, r := divideNormalStrict2By1([2]uint(x), y, iy)
+		q, r := divisionNormalStrict2By1([2]uint(x), y, iy)
 		t.Logf("q = %v, r = %v", q, r)
 
 		// compute with math/bits
@@ -53,7 +53,7 @@ func TestDivideBy1_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		q := make([]uint, len(x))
-		r := DivideBy1(q, x, y)
+		r := DivisionBy1(q, x, y)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -86,7 +86,7 @@ func TestDivideNormalStrict3By2_Differential_Rapid(t *testing.T) {
 
 		// compute with purple
 		iy := Reciprocal2(y)
-		q, r := divideNormalStrict3By2(x, y, iy)
+		q, r := divisionNormalStrict3By2(x, y, iy)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -123,7 +123,7 @@ func TestDivideNormalStrictN1ByN(t *testing.T) {
 
 			iy := Reciprocal(it.y[len(it.y)-1])
 			r := make([]uint, len(it.y))
-			q := divideNormalStrictN1ByN(r, it.x, it.y, iy)
+			q := divisionNormalStrictN1ByN(r, it.x, it.y, iy)
 			t.Logf("q = %X", q)
 			t.Logf("r = %X", r)
 
@@ -157,7 +157,7 @@ func TestDivideNormalStrictN1ByN_Differential_Rapid(t *testing.T) {
 		// compute with purple
 		iy := Reciprocal(y[len(y)-1])
 		r := make([]uint, len(x))
-		q := divideNormalStrictN1ByN(r, x, y, iy)
+		q := divisionNormalStrictN1ByN(r, x, y, iy)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -194,13 +194,13 @@ func TestDivideNormalStrictN1ByN_Accumulate_Rapid(t *testing.T) {
 
 		// compute in result style
 		r1 := make([]uint, len(x))
-		q1 := divideNormalStrictN1ByN(r1, x, y, iy)
+		q1 := divisionNormalStrictN1ByN(r1, x, y, iy)
 		t.Logf("q = %v, r = %v", q1, r1)
 
 		// compute in accumulation style
 		r2 := make([]uint, len(x))
 		copy(r2, x)
-		q2 := divideNormalStrictN1ByN(r2, r2, y, iy)
+		q2 := divisionNormalStrictN1ByN(r2, r2, y, iy)
 		t.Logf("q2 = %v, r2 = %v", q2, r2)
 
 		// compare
@@ -222,7 +222,7 @@ func TestDivide_Differential_Rapid(t *testing.T) {
 		// compute with purple
 		q := make([]uint, len(x))
 		r := make([]uint, len(y))
-		Divide(q, r, x, y)
+		Division(q, r, x, y)
 		t.Logf("q = %X, r = %X", q, r)
 
 		// compute with math/big
@@ -262,7 +262,7 @@ func BenchmarkDivideNormalStrict2By1(b *testing.B) {
 		iy := Reciprocal(y)
 		var q, r uint
 		for b.Loop() {
-			q, r = divideNormalStrict2By1(x, y, iy)
+			q, r = divisionNormalStrict2By1(x, y, iy)
 		}
 		_, _ = q, r
 	})
@@ -291,7 +291,7 @@ func BenchmarkDivideNormalStrict3By2(b *testing.B) {
 	x[1] = rng.Uint()
 	x[2] = rng.Uint()
 	if NotSmaller(x[1:], y[:]) {
-		_ = Subtract(x[1:], x[1:], y[:])
+		_ = Difference(x[1:], x[1:], y[:])
 	}
 
 	// measure purple
@@ -300,7 +300,7 @@ func BenchmarkDivideNormalStrict3By2(b *testing.B) {
 		var q uint
 		var r [2]uint
 		for b.Loop() {
-			q, r = divideNormalStrict3By2(x, y, iy)
+			q, r = divisionNormalStrict3By2(x, y, iy)
 		}
 		_, _ = q, r
 	})
@@ -334,7 +334,7 @@ func BenchmarkDivideNormalStrictN1ByN(b *testing.B) {
 			x[i] = rng.Uint()
 		}
 		if NotSmaller(x[1:], y[:]) {
-			_ = Subtract(x[1:], x[1:], y[:])
+			_ = Difference(x[1:], x[1:], y[:])
 		}
 
 		// measure purple
@@ -343,7 +343,7 @@ func BenchmarkDivideNormalStrictN1ByN(b *testing.B) {
 			var q uint
 			r := make([]uint, N)
 			for b.Loop() {
-				q = divideNormalStrictN1ByN(r[:], x[:], y[:], iy)
+				q = divisionNormalStrictN1ByN(r[:], x[:], y[:], iy)
 			}
 			_, _ = q, r
 		})
@@ -385,7 +385,7 @@ func BenchmarkDivide(b *testing.B) {
 			q := make([]uint, N)
 			r := make([]uint, N)
 			for b.Loop() {
-				Divide(q[:], r[:], x[:], y[:])
+				Division(q[:], r[:], x[:], y[:])
 			}
 			_, _ = q, r
 		})
