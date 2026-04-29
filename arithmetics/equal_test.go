@@ -10,30 +10,32 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestAreEqual_Differential_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		// generate samples
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
+func TestEqual_Rapid(t *testing.T) {
+	t.Run("differential", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			// generate samples
+			x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+			y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 
-		// compute with purple
-		equals := AreEqual(x, y)
-		t.Logf("equals = %v", equals)
+			// compute with purple
+			equals := AreEqual(x, y)
+			t.Logf("equals = %v", equals)
 
-		// compute with math/big
-		x_ := toBigInt(x)
-		y_ := toBigInt(y)
-		equals_ := x_.CmpAbs(y_) == 0
-		t.Logf("equals_ = %v", equals_)
+			// compute with math/big
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			equals_ := x_.CmpAbs(y_) == 0
+			t.Logf("equals_ = %v", equals_)
 
-		// compare
-		if equals != equals {
-			t.Error("difference in result")
-		}
+			// compare
+			if equals != equals {
+				t.Error("difference in result")
+			}
+		})
 	})
 }
 
-func BenchmarkAreEqual(b *testing.B) {
+func BenchmarkEqual(b *testing.B) {
 	rng := newRand()
 
 	for _, words := range []uint{8, 16, 32, 64, 128, 256} {

@@ -10,30 +10,32 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestIsGreater_Differential_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		// generate samples
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
+func TestGreater_Rapid(t *testing.T) {
+	t.Run("differential", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			// generate samples
+			x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+			y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 
-		// compute with purple
-		greater := IsGreater(x, y)
-		t.Logf("greater = %v", greater)
+			// compute with purple
+			greater := IsGreater(x, y)
+			t.Logf("greater = %v", greater)
 
-		// compute with math/big
-		x_ := toBigInt(x)
-		y_ := toBigInt(y)
-		greater_ := x_.CmpAbs(y_) > 0
-		t.Logf("greater_ = %v", greater_)
+			// compute with math/big
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			greater_ := x_.CmpAbs(y_) > 0
+			t.Logf("greater_ = %v", greater_)
 
-		// compare
-		if greater != greater {
-			t.Error("difference in result")
-		}
+			// compare
+			if greater != greater {
+				t.Error("difference in result")
+			}
+		})
 	})
 }
 
-func BenchmarkIsGreater(b *testing.B) {
+func BenchmarkGreater(b *testing.B) {
 	rng := newRand()
 
 	for _, words := range []uint{8, 16, 32, 64, 128, 256} {

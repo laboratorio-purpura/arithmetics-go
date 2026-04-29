@@ -11,29 +11,31 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestIsZero_Differential_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		// generate samples
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+func TestZero_Rapid(t *testing.T) {
+	t.Run("differential", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			// generate samples
+			x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
 
-		// compute with purple
-		zero := IsZero(x)
-		t.Logf("equals = %v", zero)
+			// compute with purple
+			zero := IsZero(x)
+			t.Logf("equals = %v", zero)
 
-		// compute with math/big
-		x_ := toBigInt(x)
-		y_ := big.NewInt(0)
-		zero_ := x_.CmpAbs(y_) == 0
-		t.Logf("equals_ = %v", zero_)
+			// compute with math/big
+			x_ := toBigInt(x)
+			y_ := big.NewInt(0)
+			zero_ := x_.CmpAbs(y_) == 0
+			t.Logf("equals_ = %v", zero_)
 
-		// compare
-		if zero != zero {
-			t.Error("difference in result")
-		}
+			// compare
+			if zero != zero {
+				t.Error("difference in result")
+			}
+		})
 	})
 }
 
-func BenchmarkIsZero(b *testing.B) {
+func BenchmarkZero(b *testing.B) {
 	rng := newRand()
 
 	for _, words := range []uint{8, 16, 32, 64, 128, 256} {

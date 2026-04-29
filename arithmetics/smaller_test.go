@@ -10,30 +10,32 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestIsSmaller_Differential_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		// generate samples
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
+func TestSmaller_Rapid(t *testing.T) {
+	t.Run("differential", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			// generate samples
+			x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+			y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 
-		// compute with purple
-		smaller := IsSmaller(x, y)
-		t.Logf("smaller = %v", smaller)
+			// compute with purple
+			smaller := IsSmaller(x, y)
+			t.Logf("smaller = %v", smaller)
 
-		// compute with math/big
-		x_ := toBigInt(x)
-		y_ := toBigInt(y)
-		smaller_ := x_.CmpAbs(y_) < 0
-		t.Logf("smaller_ = %v", smaller_)
+			// compute with math/big
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			smaller_ := x_.CmpAbs(y_) < 0
+			t.Logf("smaller_ = %v", smaller_)
 
-		// compare
-		if smaller != smaller {
-			t.Error("difference in result")
-		}
+			// compare
+			if smaller != smaller {
+				t.Error("difference in result")
+			}
+		})
 	})
 }
 
-func BenchmarkIsSmaller(b *testing.B) {
+func BenchmarkSmaller(b *testing.B) {
 	rng := newRand()
 
 	for _, words := range []uint{8, 16, 32, 64, 128, 256} {

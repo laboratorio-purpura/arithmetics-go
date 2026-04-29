@@ -11,55 +11,59 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestMultiplyBy1_Differential_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		// generate samples
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		y := rapid.Uint().Draw(t, "y")
+func TestProductBy1_Rapid(t *testing.T) {
+	t.Run("differential", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			// generate samples
+			x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+			y := rapid.Uint().Draw(t, "y")
 
-		// compute with purple
-		product := make([]uint, len(x)+1)
-		product[len(x)] = ProductBy1(product, x, y)
-		t.Logf("product = %X", product)
+			// compute with purple
+			product := make([]uint, len(x)+1)
+			product[len(x)] = ProductBy1(product, x, y)
+			t.Logf("product = %X", product)
 
-		// compute with math/big
-		x_ := toBigInt(x)
-		y_ := big.NewInt(0).SetUint64(uint64(y))
-		product_ := big.NewInt(0).Mul(x_, y_)
-		t.Logf("product_ = %X", product_)
+			// compute with math/big
+			x_ := toBigInt(x)
+			y_ := big.NewInt(0).SetUint64(uint64(y))
+			product_ := big.NewInt(0).Mul(x_, y_)
+			t.Logf("product_ = %X", product_)
 
-		// compare
-		if toBigInt(product).Cmp(product_) != 0 {
-			t.Error("difference in product")
-		}
+			// compare
+			if toBigInt(product).Cmp(product_) != 0 {
+				t.Error("difference in product")
+			}
+		})
 	})
 }
 
-func TestMultiply_Differential_Rapid(t *testing.T) {
-	rapid.Check(t, func(t *rapid.T) {
-		// generate samples
-		x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
-		y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
+func TestProduct_Rapid(t *testing.T) {
+	t.Run("differential", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			// generate samples
+			x := rapid.SliceOf(rapid.Uint()).Draw(t, "x")
+			y := rapid.SliceOf(rapid.Uint()).Draw(t, "y")
 
-		// compute with purple
-		product := make([]uint, len(x)+len(y))
-		Product(product, x, y)
-		t.Logf("product = %X", product)
+			// compute with purple
+			product := make([]uint, len(x)+len(y))
+			Product(product, x, y)
+			t.Logf("product = %X", product)
 
-		// compute with math/big
-		x_ := toBigInt(x)
-		y_ := toBigInt(y)
-		product_ := big.NewInt(0).Mul(x_, y_)
-		t.Logf("product_ = %X", product_)
+			// compute with math/big
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			product_ := big.NewInt(0).Mul(x_, y_)
+			t.Logf("product_ = %X", product_)
 
-		// compare
-		if toBigInt(product).Cmp(product_) != 0 {
-			t.Error("difference in product")
-		}
+			// compare
+			if toBigInt(product).Cmp(product_) != 0 {
+				t.Error("difference in product")
+			}
+		})
 	})
 }
 
-func BenchmarkMultiply(b *testing.B) {
+func BenchmarkProduct(b *testing.B) {
 	rng := newRand()
 
 	for _, words := range []uint{8, 16, 32, 64, 128, 256} {
