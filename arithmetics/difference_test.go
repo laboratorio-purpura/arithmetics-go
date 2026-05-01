@@ -13,7 +13,7 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestDifference_Hegel(t *testing.T) {
+func TestDifferenceHegel(t *testing.T) {
 	t.Run("differential", func(t *testing.T) {
 		hegel.Test(t, func(ht *hegel.T) {
 
@@ -103,7 +103,7 @@ func TestDifference_Hegel(t *testing.T) {
 
 			// compare
 
-			if !slices.Equal(r1[:sz], r2[:sz]) {
+			if !slices.Equal(r1[:sz], r2) {
 				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
 			}
 
@@ -111,7 +111,7 @@ func TestDifference_Hegel(t *testing.T) {
 	})
 }
 
-func TestDifference_Rapid(t *testing.T) {
+func TestDifferenceRapid(t *testing.T) {
 	t.Run("differential", func(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
 			// generate samples

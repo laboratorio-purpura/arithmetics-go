@@ -101,7 +101,7 @@ func TestSumHegel(t *testing.T) {
 
 			// compare
 
-			if !slices.Equal(r1[:sz], r2[:sz]) {
+			if !slices.Equal(r1[:sz], r2) {
 				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
 			}
 

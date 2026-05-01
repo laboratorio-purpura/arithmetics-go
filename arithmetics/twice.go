@@ -5,36 +5,33 @@ package arithmetics
 
 import "math/bits"
 
-// Twice computes twice (to a power) of an integer.
+// Twice of nonnegative integer `x`, `y` times.
 //
-// Twice adds into product the len(product) least significant words of the result.
-// It permits aliasing product to x, in which case it becomes "double accumulate".
+// Stores into `r` the `size(r)` least significant words of the result.
+// Permits aliasing `r` to `x`, in which case it "accumulates" the result.
+// Returns the "excess" of the top word of the result.
 //
-// This implementation applies the "binary shift" method.
-func Twice(product []uint, x []uint, y uint) (excess uint) {
+// This implementation applies the "shift" method.
+func Twice(r []uint, x []uint, y uint) (e uint) {
 	const Bits = bits.UintSize
 
-	pz := len(product)
+	rz := len(r)
 	xz := len(x)
 
-	// TODO: lift this restriction
-	if y >= Bits {
-		panic("y >= Bits")
-	}
+	// TODO: document this restriction
+	y = min(y, Bits-1)
 
-	// count of result words to compute
-	z := min(pz, xz)
+	// count of result words
+	z := min(rz, xz)
 
-	// double word by word,
-	// from least to most significant,
-	// propagating excess
+	// double x, y times, word by word, propagating excess
 	for i := 0; i < z; i++ {
 		// x[i] × 2^y
 		p0 := x[i] << y
 		p1 := x[i] >> (Bits - y)
-		// store low word, propagate high word
-		product[i] = p0 + excess
-		excess = p1
+		// store low word with excess, forward high word
+		r[i] = p0 | e
+		e = p1
 	}
 
 	return
