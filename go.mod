@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f
-	hegel.dev/go/hegel v0.3.2
+	hegel.dev/go/hegel v0.3.3
 	pgregory.net/rapid v1.3.0
 )
 
