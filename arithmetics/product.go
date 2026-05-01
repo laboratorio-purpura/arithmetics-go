@@ -7,14 +7,14 @@ import (
 	"math/bits"
 )
 
-// ProductBy1 of nonnegative integers `x` and `y`.
+// ProductUni of nonnegative integers `x` and `y`.
 //
 // Stores into `r` the `size(r)` least significant words of the result.
 // Permits aliasing `r` to `x`, in which case it "accumulates" the result.
 // Returns the "excess" of the top word of the result.
 //
 // This implementation applies the "school" method described in Knuth, section 4.3.1.
-func ProductBy1(r []uint, x []uint, y uint) (e uint) {
+func ProductUni(r []uint, x []uint, y uint) (e uint) {
 	rz := len(r)
 	xz := len(x)
 

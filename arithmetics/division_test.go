@@ -99,13 +99,13 @@ func TestDivisionBy1Hegel(t *testing.T) {
 			// compute result
 
 			q1 := make([]uint, len(x))
-			r1 := DivisionBy1(q1, x, y)
+			r1 := DivisionUni(q1, x, y)
 
 			// accumulate result
 
 			q2 := make([]uint, len(x))
 			copy(q2, x)
-			r2 := DivisionBy1(q2, q2, y)
+			r2 := DivisionUni(q2, q2, y)
 
 			// compare
 
@@ -130,7 +130,7 @@ func TestDivisionBy1Hegel(t *testing.T) {
 			// compute with purple
 
 			q := make([]uint, len(x))
-			r := DivisionBy1(q, x, y)
+			r := DivisionUni(q, x, y)
 
 			// compute with math/big
 
@@ -166,12 +166,12 @@ func TestDivisionBy1Hegel(t *testing.T) {
 			// full result
 
 			q1 := make([]uint, fz)
-			_ = DivisionBy1(q1, x, y)
+			_ = DivisionUni(q1, x, y)
 
 			// short result
 
 			q2 := make([]uint, sz)
-			_ = DivisionBy1(q2, x, y)
+			_ = DivisionUni(q2, x, y)
 
 			// compare
 
@@ -194,7 +194,7 @@ func TestDivisionBy1Rapid(t *testing.T) {
 
 			// compute with purple
 			q := make([]uint, len(x))
-			r := DivisionBy1(q, x, y)
+			r := DivisionUni(q, x, y)
 			t.Logf("q = %X, r = %X", q, r)
 
 			// compute with math/big

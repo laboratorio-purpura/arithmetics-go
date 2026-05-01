@@ -45,7 +45,7 @@ func divisionNormalStrict2By1(x [2]uint, y uint, iy uint) (quotient uint, remain
 	return q1, r
 }
 
-// DivisionBy1 of nonnegative integers `x` by `y`.
+// DivisionUni of nonnegative integers `x` by `y`.
 //
 // Stores into `q` the `size(q)` least significant words of the quotient.
 // Returns the remainder.
@@ -55,7 +55,7 @@ func divisionNormalStrict2By1(x [2]uint, y uint, iy uint) (quotient uint, remain
 //
 // This implementation applies the "school" method described in Knuth, section 4.3.1,
 // augmented by the "improved division by invariant integers" method.
-func DivisionBy1(quotient []uint, x []uint, y uint) (remainder uint) {
+func DivisionUni(quotient []uint, x []uint, y uint) (remainder uint) {
 	qz := len(quotient)
 	xz := len(x)
 
@@ -198,7 +198,7 @@ func divisionNormalStrictN1ByN(remainder []uint, x []uint, y []uint, iy uint) (q
 	{
 		// let t = q' × y
 		t := make([]uint, yz+1)
-		t[yz] = ProductBy1(t, y, q_[0])
+		t[yz] = ProductUni(t, y, q_[0])
 		// remainder ← x - q' × y
 		borrow = Difference(remainder, x, t)
 	}
@@ -237,7 +237,7 @@ func Division(q []uint, r []uint, x []uint, y []uint) {
 	}
 
 	if yz == 1 {
-		r_ := DivisionBy1(q, x, y[0])
+		r_ := DivisionUni(q, x, y[0])
 		AssignUni(r, r_)
 		return
 	}

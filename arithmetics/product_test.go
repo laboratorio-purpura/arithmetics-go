@@ -28,7 +28,7 @@ func TestProductBy1Hegel(t *testing.T) {
 			// compute with purple
 
 			r := make([]uint, z+1)
-			r[z] = ProductBy1(r, x, y)
+			r[z] = ProductUni(r, x, y)
 
 			// compute with math/big
 
@@ -57,13 +57,13 @@ func TestProductBy1Hegel(t *testing.T) {
 			// compute result
 
 			r1 := make([]uint, z)
-			e1 := ProductBy1(r1, x, y)
+			e1 := ProductUni(r1, x, y)
 
 			// accumulate result
 
 			r2 := make([]uint, z)
 			copy(r2, x)
-			e2 := ProductBy1(r2, r2, y)
+			e2 := ProductUni(r2, r2, y)
 
 			// compare
 
@@ -92,12 +92,12 @@ func TestProductBy1Hegel(t *testing.T) {
 			// full result
 
 			r1 := make([]uint, fz)
-			_ = ProductBy1(r1, x, y)
+			_ = ProductUni(r1, x, y)
 
 			// short result
 
 			r2 := make([]uint, sz)
-			_ = ProductBy1(r2, x, y)
+			_ = ProductUni(r2, x, y)
 
 			// compare
 
@@ -118,7 +118,7 @@ func TestProductBy1Rapid(t *testing.T) {
 
 			// compute with purple
 			product := make([]uint, len(x)+1)
-			product[len(x)] = ProductBy1(product, x, y)
+			product[len(x)] = ProductUni(product, x, y)
 			t.Logf("product = %X", product)
 
 			// compute with math/big
