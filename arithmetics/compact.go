@@ -8,12 +8,13 @@ func IsCompact(x []uint) bool {
 }
 
 func NotCompact(x []uint) bool {
-	return len(x) >= 2 && x[len(x)-1] == 0
+	return len(x) == 1 || x[len(x)-1] == 0
 }
 
 func Compact(x []uint) []uint {
-	for NotCompact(x) {
-		x = x[:len(x)-1]
+	i := len(x)
+	for i > 1 && x[i-1] == 0 {
+		i--
 	}
-	return x
+	return x[:i]
 }

@@ -21,21 +21,43 @@ func hegelLongInteger() hegel.Generator[[]uint] {
 	return hegel.Lists(hegel.Integers[uint](0, math.MaxUint))
 }
 
+func hegelLongInteger2(minSize, maxSize int) hegel.Generator[[]uint] {
+	integers := hegel.Integers[uint](0, math.MaxUint)
+	return hegel.Lists(integers).MinSize(minSize).MaxSize(maxSize)
+}
+
 func hegelNonemptyLongInteger() hegel.Generator[[]uint] {
 	return hegel.Filter(hegel.Lists(hegel.Integers[uint](0, math.MaxUint)), func(v []uint) bool {
 		return len(v) > 0
 	})
 }
 
-func hegelNonzeroCompactLongInteger() hegel.Generator[[]uint] {
-	return hegel.Filter(hegel.Lists(hegel.Integers[uint](0, math.MaxUint)), func(v []uint) bool {
-		return NotZero(v) && IsCompact(v)
+func hegelNonzeroCompactLongInteger(minSize, maxSize int) hegel.Generator[[]uint] {
+	return hegel.Composite[[]uint](func(ht *hegel.TestCase) []uint {
+		mid := hegel.Draw[[]uint](ht,
+			hegel.Lists(hegel.Integers[uint](0, math.MaxUint)).MinSize(minSize).MaxSize(maxSize-1),
+		)
+		top := hegel.Draw(ht, hegel.Integers[uint](1, math.MaxUint))
+		integer := make([]uint, len(mid)+1)
+		copy(integer, mid)
+		integer[len(mid)] = top
+		return integer
 	})
 }
 
-func hegelNormalLongInteger() hegel.Generator[[]uint] {
-	return hegel.Filter(hegel.Lists(hegel.Integers[uint](0, math.MaxUint)), func(v []uint) bool {
-		return IsNormal(v)
+func hegelNormalLongInteger(minSize, maxSize int) hegel.Generator[[]uint] {
+	const Bits = bits.UintSize
+	return hegel.Composite[[]uint](func(ht *hegel.TestCase) []uint {
+		mid := hegel.Draw[[]uint](ht,
+			hegel.Lists(hegel.Integers[uint](0, math.MaxUint)).MinSize(minSize).MaxSize(maxSize-1),
+		)
+		top := hegel.Draw(ht,
+			hegel.Integers[uint](1<<Bits-1, math.MaxUint),
+		)
+		integer := make([]uint, len(mid)+1)
+		copy(integer, mid)
+		integer[len(mid)] = top
+		return integer
 	})
 }
 

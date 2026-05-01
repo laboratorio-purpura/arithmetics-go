@@ -5,15 +5,57 @@ package arithmetics
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 	"math/bits"
 	"slices"
 	"testing"
 
+	"hegel.dev/go/hegel"
 	"pgregory.net/rapid"
 )
 
-func TestDivisionNormalStrict2By1_Rapid(t *testing.T) {
+func TestDivisionNormalStrict2By1Hegel(t *testing.T) {
+	const Bits = bits.UintSize
+	t.Run("differential", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			// y must be "normal"
+			const normal = 1 << (Bits - 1)
+			y := hegel.Draw(ht, hegel.Integers[uint](normal, math.MaxUint))
+			// x must be "strict": x ÷ β < y
+			strict := y - 1
+			x := [2]uint{
+				hegel.Draw(ht, hegel.Integers[uint](0, math.MaxUint)),
+				hegel.Draw(ht, hegel.Integers[uint](0, strict)),
+			}
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute with purple
+
+			iy := Reciprocal(y)
+			q, r := divisionNormalStrict2By1(x, y, iy)
+
+			// compute with math/bits
+
+			q_, r_ := bits.Div(x[1], x[0], y)
+
+			// compare
+
+			if q != q_ {
+				t.Errorf("q = %v, q_ = %v", q, q_)
+			}
+			if r != r_ {
+				t.Errorf("r = %v, r_ = %v", r, r_)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+}
+
+func TestDivisionNormalStrict2By1Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 	t.Run("differential", func(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
@@ -44,7 +86,104 @@ func TestDivisionNormalStrict2By1_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivisionBy1_Rapid(t *testing.T) {
+func TestDivisionBy1Hegel(t *testing.T) {
+	t.Run("accumulate", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger2(0, 64))
+			y := hegel.Draw(ht, hegel.Integers[uint](1, math.MaxUint))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute result
+
+			q1 := make([]uint, len(x))
+			r1 := DivisionBy1(q1, x, y)
+
+			// accumulate result
+
+			q2 := make([]uint, len(x))
+			copy(q2, x)
+			r2 := DivisionBy1(q2, q2, y)
+
+			// compare
+
+			if NotEqual(q1, q2) {
+				ht.Fatalf("q1 = %X, q2 = %X", q1, q2)
+			}
+			if r1 != r2 {
+				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("differential", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger2(0, 64))
+			y := hegel.Draw(ht, hegel.Integers[uint](1, math.MaxUint))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute with purple
+
+			q := make([]uint, len(x))
+			r := DivisionBy1(q, x, y)
+
+			// compute with math/big
+
+			x_ := toBigInt(x)
+			y_ := big.NewInt(0).SetUint64(uint64(y))
+			q_ := big.NewInt(0).Div(x_, y_)
+			r_ := big.NewInt(0).Mod(x_, y_)
+
+			// compare
+
+			if toBigInt(q).Cmp(q_) != 0 {
+				ht.Fatalf("q = %X, q_ = %X", q, q_)
+			}
+			if big.NewInt(0).SetUint64(uint64(r)).Cmp(r_) != 0 {
+				ht.Fatalf("r = %X, r_ = %X", r, r_)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("short-quotient", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw(ht, hegelLongInteger2(1, 64))
+			y := hegel.Draw(ht, hegel.Integers[uint](1, math.MaxUint))
+			// full size
+			fz := len(x)
+			// short size
+			sz := hegel.Draw(ht, hegel.Integers[int](0, fz-1))
+			ht.Logf("x = %X, y = %X, sz = %d", x, y, sz)
+
+			// full result
+
+			q1 := make([]uint, fz)
+			_ = DivisionBy1(q1, x, y)
+
+			// short result
+
+			q2 := make([]uint, sz)
+			_ = DivisionBy1(q2, x, y)
+
+			// compare
+
+			if NotEqual(q1[:sz], q2) {
+				ht.Fatalf("q1 = %X, q2 = %X", q1, q2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+}
+
+func TestDivisionBy1Rapid(t *testing.T) {
 	t.Run("differential", func(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
 			// generate samples
@@ -76,7 +215,54 @@ func TestDivisionBy1_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivisionNormalStrict3By2_Rapid(t *testing.T) {
+func TestDivisionNormalStrict3By2Hegel(t *testing.T) {
+	const Bits = bits.UintSize
+	t.Run("differential", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			// y must be "normal"
+			const normal = 1 << (Bits - 1)
+			y := [2]uint{
+				hegel.Draw(ht, hegel.Integers[uint](0, math.MaxUint)),
+				hegel.Draw(ht, hegel.Integers[uint](normal, math.MaxUint)),
+			}
+			// x must be "strict": x ÷ β < y
+			x := [3]uint{
+				hegel.Draw(ht, hegel.Integers[uint](0, math.MaxUint)),
+				hegel.Draw(ht, hegel.Integers[uint](0, math.MaxUint)),
+				hegel.Draw(ht, hegel.Integers[uint](0, math.MaxUint)),
+			}
+			ht.Assume(IsSmaller(x[1:], y[:]))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute with purple
+
+			iy := Reciprocal2(y)
+			q, r := divisionNormalStrict3By2(x, y, iy)
+
+			// compute with math/big
+
+			x_ := toBigInt(x[:])
+			y_ := toBigInt(y[:])
+			q_ := big.NewInt(0).Div(x_, y_)
+			r_ := big.NewInt(0).Mod(x_, y_)
+
+			// compare
+
+			if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {
+				ht.Fatalf("q = %X, q_ = %X", q, q_)
+			}
+			if toBigInt(r[:]).Cmp(r_) != 0 {
+				ht.Fatalf("r = %X, r_ = %X", r, r_)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+}
+
+func TestDivisionNormalStrict3By2Rapid(t *testing.T) {
 	t.Run("differential", func(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
 			// generate samples
@@ -111,7 +297,83 @@ func TestDivisionNormalStrict3By2_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivisionNormalStrictN1ByN_Rapid(t *testing.T) {
+func TestDivisionNormalStrictN1ByNHegel(t *testing.T) {
+	t.Run("accumulate", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			// y must be "normal"
+			y := hegel.Draw(ht, hegelNormalLongInteger(1, 63))
+			yz := len(y)
+			// x must be "strict": x ÷ β < y
+			x := hegel.Draw(ht, hegelLongInteger2(yz+1, yz+1))
+			ht.Assume(IsSmaller(x[1:], y[:]))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// result
+
+			iy := Reciprocal(y[yz-1])
+			r1 := make([]uint, len(x))
+			q1 := divisionNormalStrictN1ByN(r1, x, y, iy)
+
+			// accumulate result
+
+			r2 := make([]uint, len(x))
+			copy(r2, x)
+			q2 := divisionNormalStrictN1ByN(r2, r2, y, iy)
+
+			// compare
+
+			if q1 != q2 {
+				ht.Fatalf("q1 = %X, q2 = %X", q1, q2)
+			}
+			if NotEqual(r1, r2) {
+				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("differential", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			// y must be "normal"
+			y := hegel.Draw(ht, hegelNormalLongInteger(1, 63))
+			yz := len(y)
+			// x must be "strict": x ÷ β < y
+			x := hegel.Draw(ht, hegelLongInteger2(yz+1, yz+1))
+			ht.Assume(IsSmaller(x[1:], y[:]))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute with purple
+
+			iy := Reciprocal(y[yz-1])
+			r := make([]uint, len(x))
+			q := divisionNormalStrictN1ByN(r, x, y, iy)
+
+			// compute with math/big
+
+			x_ := toBigInt(x[:])
+			y_ := toBigInt(y[:])
+			q_ := big.NewInt(0).Div(x_, y_)
+			r_ := big.NewInt(0).Mod(x_, y_)
+
+			// compare
+
+			if big.NewInt(0).SetUint64(uint64(q)).Cmp(q_) != 0 {
+				ht.Fatalf("q = %X, q_ = %X", q, q_)
+			}
+			if toBigInt(r).Cmp(r_) != 0 {
+				ht.Fatalf("r = %X, r_ = %X", r, r_)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+}
+
+func TestDivisionNormalStrictN1ByNRapid(t *testing.T) {
 	t.Run("differential", func(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
 			// generate samples
@@ -181,7 +443,152 @@ func TestDivisionNormalStrictN1ByN_Rapid(t *testing.T) {
 	})
 }
 
-func TestDivision_Rapid(t *testing.T) {
+func TestDivisionHegel(t *testing.T) {
+	t.Run("accumulate-remainder", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger2(0, 64))
+			y := hegel.Draw[[]uint](ht, hegelLongInteger2(1, 64))
+			ht.Assume(NotZero(y))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute result
+
+			q1 := make([]uint, len(x))
+			r1 := make([]uint, len(x))
+			Division(q1, r1, x, y)
+
+			// accumulate result
+
+			q2 := make([]uint, len(x))
+			r2 := make([]uint, len(x))
+			copy(r2, x)
+			Division(q2, r2, r2, y)
+
+			// compare
+
+			if NotEqual(q1, q2) {
+				ht.Fatalf("q1 = %X, q2 = %X", q1, q2)
+			}
+			if NotEqual(r1, r2) {
+				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("differential", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger2(0, 64))
+			y := hegel.Draw[[]uint](ht, hegelLongInteger2(1, 64))
+			ht.Assume(NotZero(y))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute with purple
+
+			q := make([]uint, len(x))
+			r := make([]uint, len(y))
+			Division(q, r, x, y)
+
+			// compute with math/big
+
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			q_ := big.NewInt(0).Div(x_, y_)
+			r_ := big.NewInt(0).Mod(x_, y_)
+
+			// compare
+
+			if toBigInt(q).Cmp(q_) != 0 {
+				ht.Fatalf("q = %X, q_ = %X", q, q_)
+			}
+			if toBigInt(r).Cmp(r_) != 0 {
+				ht.Fatalf("r = %X, r_ = %X", r, r_)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("short-quotient", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger2(1, 64))
+			y := hegel.Draw[[]uint](ht, hegelLongInteger2(1, 64))
+			ht.Assume(NotZero(y))
+			// full size
+			fz := len(x)
+			// short size
+			sz := hegel.Draw(ht, hegel.Integers[int](0, fz-1))
+			ht.Logf("x = %X, y = %X, sz = %d", x, y, sz)
+
+			// full quotient
+
+			q1 := make([]uint, fz)
+			r1 := make([]uint, len(y))
+			Division(q1, r1, x, y)
+
+			// short quotient
+
+			q2 := make([]uint, sz)
+			r2 := make([]uint, len(y))
+			Division(q2, r2, x, y)
+
+			// compare
+
+			if NotEqual(q1[:sz], q2) {
+				ht.Fatalf("q1 = %X, q2 = %X", q1, q2)
+			}
+			if NotEqual(r1, r2) {
+				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("short-remainder", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger2(1, 64))
+			y := hegel.Draw[[]uint](ht, hegelLongInteger2(1, 64))
+			ht.Assume(NotZero(y))
+			// full size
+			fz := len(x)
+			// short size
+			sz := hegel.Draw(ht, hegel.Integers[int](0, fz-1))
+			ht.Logf("x = %X, y = %X, sz = %d", x, y, sz)
+
+			// full remainder
+
+			q1 := make([]uint, len(x))
+			r1 := make([]uint, fz)
+			Division(q1, r1, x, y)
+
+			// short remainder
+
+			q2 := make([]uint, len(x))
+			r2 := make([]uint, sz)
+			Division(q2, r2, x, y)
+
+			// compare
+
+			if NotEqual(q1, q2) {
+				ht.Fatalf("q1 = %X, q2 = %X", q1, q2)
+			}
+			if NotEqual(r1[:sz], r2) {
+				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+}
+
+func TestDivisionRapid(t *testing.T) {
 	t.Run("differential", func(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
 			// generate samples
