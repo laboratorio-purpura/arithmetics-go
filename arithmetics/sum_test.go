@@ -10,10 +10,106 @@ import (
 	"slices"
 	"testing"
 
+	"hegel.dev/go/hegel"
 	"pgregory.net/rapid"
 )
 
-func TestSum_Rapid(t *testing.T) {
+func TestSumHegel(t *testing.T) {
+	t.Run("differential", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger())
+			y := hegel.Draw[[]uint](ht, hegelLongInteger())
+			z := max(len(x), len(y))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute with purple
+
+			r := make([]uint, z+1)
+			r[z] = Sum(r, x, y)
+
+			// compute with math/big
+
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			r_ := big.NewInt(0).Add(x_, y_)
+
+			// compare
+
+			if toBigInt(r).Cmp(r_) != 0 {
+				ht.Fatalf("r = %X, r_ = %X", r, r_)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("accumulate", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger())
+			y := hegel.Draw[[]uint](ht, hegelLongInteger())
+			z := max(len(x), len(y))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// result
+
+			r1 := make([]uint, z)
+			c1 := Sum(r1, x, y)
+
+			// accumulate result
+
+			r2 := make([]uint, z)
+			copy(r2, x)
+			c2 := Sum(r2, r2, y)
+
+			// compare
+
+			if !slices.Equal(r1, r2) {
+				ht.Fatalf("r = %X, r_ = %X", r1, r2)
+			}
+			if c1 != c2 {
+				ht.Fatalf("c1 = %d, c2 = %d", c1, c2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("short-result", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelNonemptyLongInteger())
+			y := hegel.Draw[[]uint](ht, hegelNonemptyLongInteger())
+			// full size
+			fz := max(len(x), len(y))
+			// short size
+			sz := hegel.Draw(ht, hegel.Integers[int](0, fz-1))
+			ht.Logf("x = %X, y = %X, sz = %d", x, y, sz)
+
+			// full result
+
+			r1 := make([]uint, fz)
+			_ = Sum(r1, x, y)
+
+			// short result
+
+			r2 := make([]uint, sz)
+			_ = Sum(r2, x, y)
+
+			// compare
+
+			if !slices.Equal(r1[:sz], r2[:sz]) {
+				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+}
+
+func TestSumRapid(t *testing.T) {
 	t.Run("differential", func(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
 			// generate samples

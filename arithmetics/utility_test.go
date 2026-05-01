@@ -4,14 +4,40 @@
 package arithmetics
 
 import (
+	"math"
 	"math/big"
 	"math/bits"
 	"math/rand/v2"
 	"unsafe"
 
 	"golang.org/x/exp/constraints"
+	"hegel.dev/go/hegel"
 	"pgregory.net/rapid"
 )
+
+const hegelCases = 10000
+
+func hegelLongInteger() hegel.Generator[[]uint] {
+	return hegel.Lists(hegel.Integers[uint](0, math.MaxUint))
+}
+
+func hegelNonemptyLongInteger() hegel.Generator[[]uint] {
+	return hegel.Filter(hegel.Lists(hegel.Integers[uint](0, math.MaxUint)), func(v []uint) bool {
+		return len(v) > 0
+	})
+}
+
+func hegelNonzeroCompactLongInteger() hegel.Generator[[]uint] {
+	return hegel.Filter(hegel.Lists(hegel.Integers[uint](0, math.MaxUint)), func(v []uint) bool {
+		return NotZero(v) && IsCompact(v)
+	})
+}
+
+func hegelNormalLongInteger() hegel.Generator[[]uint] {
+	return hegel.Filter(hegel.Lists(hegel.Integers[uint](0, math.MaxUint)), func(v []uint) bool {
+		return IsNormal(v)
+	})
+}
 
 func normalLongInteger[E constraints.Integer](unit *rapid.Generator[E], minLen int, maxLen int) *rapid.Generator[[]E] {
 	return rapid.Custom(func(t *rapid.T) []E {
