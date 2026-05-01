@@ -8,7 +8,41 @@ import (
 	"pgregory.net/rapid"
 )
 
-func TestReciprocal2_Rapid(t *testing.T) {
+func TestReciprocalRapid(t *testing.T) {
+	const Bits = bits.UintSize
+	t.Run("differential", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			y := normalLongInteger(rapid.Uint(), 2, 2).Draw(t, "y")
+			t.Logf("y = %X", y)
+
+			iy := Reciprocal2([2]uint(y))
+			t.Logf("iy = %X", iy)
+
+			// y_ = y0 | y1 << Bits
+			y_ := toBigInt(y)
+			t.Logf("y_ = %X", y_)
+
+			// by definition: iy_ = ((β^3 − 1) ÷ y) − β
+			_1 := big.NewInt(1)
+			β := big.NewInt(0).Lsh(_1, Bits)
+			β3 := big.NewInt(0).Lsh(_1, Bits*3)
+			iy_ := big.NewInt(0)
+			iy_ = iy_.Sub(β3, _1)
+			iy_ = iy_.Div(iy_, y_)
+			iy_ = iy_.Sub(iy_, β)
+			t.Logf("iy_ = %X", iy_)
+			if iy_.Cmp(β) != -1 {
+				t.Fatal("iy_ ≥ β")
+			}
+
+			if iy_.Uint64() != uint64(iy) {
+				t.Error("iy_ ≠ iy")
+			}
+		})
+	})
+}
+
+func TestReciprocal2Rapid(t *testing.T) {
 	const Bits = bits.UintSize
 	t.Run("differential", func(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
@@ -39,40 +73,6 @@ func TestReciprocal2_Rapid(t *testing.T) {
 
 			if iy_.Uint64() != uint64(iy) {
 				t.Errorf("iy_ ≠ iy")
-			}
-		})
-	})
-}
-
-func TestReciprocal_Rapid(t *testing.T) {
-	const Bits = bits.UintSize
-	t.Run("differential", func(t *testing.T) {
-		rapid.Check(t, func(t *rapid.T) {
-			y := normalLongInteger(rapid.Uint(), 2, 2).Draw(t, "y")
-			t.Logf("y = %X", y)
-
-			iy := Reciprocal2([2]uint(y))
-			t.Logf("iy = %X", iy)
-
-			// y_ = y0 | y1 << Bits
-			y_ := toBigInt(y)
-			t.Logf("y_ = %X", y_)
-
-			// by definition: iy_ = ((β^3 − 1) ÷ y) − β
-			_1 := big.NewInt(1)
-			β := big.NewInt(0).Lsh(_1, Bits)
-			β3 := big.NewInt(0).Lsh(_1, Bits*3)
-			iy_ := big.NewInt(0)
-			iy_ = iy_.Sub(β3, _1)
-			iy_ = iy_.Div(iy_, y_)
-			iy_ = iy_.Sub(iy_, β)
-			t.Logf("iy_ = %X", iy_)
-			if iy_.Cmp(β) != -1 {
-				t.Fatal("iy_ ≥ β")
-			}
-
-			if iy_.Uint64() != uint64(iy) {
-				t.Error("iy_ ≠ iy")
 			}
 		})
 	})
