@@ -9,8 +9,107 @@ import (
 	"slices"
 	"testing"
 
+	"hegel.dev/go/hegel"
 	"pgregory.net/rapid"
 )
+
+func TestDifference_Hegel(t *testing.T) {
+	t.Run("differential", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger())
+			y := hegel.Draw[[]uint](ht, hegelLongInteger())
+			z := max(len(x), len(y))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute with purple
+
+			r := make([]uint, z)
+			b := Difference(r, x, y)
+
+			// TODO: lift this restriction
+			ht.Assume(b == 0)
+
+			// compute with math/big
+
+			x_ := toBigInt(x)
+			y_ := toBigInt(y)
+			r_ := big.NewInt(0).Sub(x_, y_)
+
+			// compare
+
+			if toBigInt(r).Cmp(r_) != 0 {
+				ht.Fatalf("r = %X, r_ = %X", r, r_)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("accumulate", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger())
+			y := hegel.Draw[[]uint](ht, hegelLongInteger())
+			z := max(len(x), len(y))
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute result
+
+			r1 := make([]uint, z)
+			b1 := Difference(r1, x, y)
+
+			// accumulate result
+
+			r2 := make([]uint, z)
+			copy(r2, x)
+			b2 := Difference(r2, r2, y)
+
+			// compare
+
+			if !slices.Equal(r1, r2) {
+				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
+			}
+			if b1 != b2 {
+				ht.Fatalf("b1 = %d, b2 = %d", b1, b2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("short-result", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelNonemptyLongInteger())
+			y := hegel.Draw[[]uint](ht, hegelNonemptyLongInteger())
+			// full size
+			fz := max(len(x), len(y))
+			// short size
+			sz := hegel.Draw(ht, hegel.Integers[int](0, fz-1))
+			ht.Logf("x = %X, y = %X, sz = %d", x, y, sz)
+
+			// full result
+
+			r1 := make([]uint, fz)
+			_ = Difference(r1, x, y)
+
+			// short result
+
+			r2 := make([]uint, sz)
+			_ = Difference(r2, x, y)
+
+			// compare
+
+			if !slices.Equal(r1[:sz], r2[:sz]) {
+				ht.Fatalf("r1 = %X, r2 = %X", r1, r2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+}
 
 func TestDifference_Rapid(t *testing.T) {
 	t.Run("differential", func(t *testing.T) {
