@@ -2,36 +2,38 @@ package arithmetics
 
 import "math/bits"
 
-// Half computes half (to a power) of an integer.
+// Half of nonnegative integer `x`, `y` times.
 //
-// Half stores into quotient the len(quotient) least significant words of the result.
-// It permits aliasing quotient to x, in which case it becomes "halve accumulate".
+// Stores into `q` the `size(q)` least significant words of the quotient.
+// Returns the remainder.
 //
-// This implementation applies the "binary shift" method.
-func Half(quotient []uint, x []uint, y uint) (remainder uint) {
+// This implementation applies the "shift" method.
+func Half(q []uint, x []uint, y uint) (r uint) {
 	const Bits = bits.UintSize
 
-	qz := len(quotient)
+	qz := len(q)
 	xz := len(x)
 
-	// TODO: lift this restriction
-	if y >= Bits {
-		panic("y >= Bits")
-	}
+	// TODO: document this restriction
+	y = min(y, Bits-1)
 
-	// count of result words to compute
+	// count of result words
 	z := min(qz, xz)
 
-	// halve word by word,
-	// from most to least significant,
-	// propagating remainder
+	// halve x, y times, word by word, propagating remainder
+	if xz > z {
+		// x[z] ÷ 2^y
+		// forward remainder, preshifted
+		r = x[z] << (Bits - y)
+	}
 	for i := z; i > 0; i-- {
 		// x[i] ÷ 2^y
-		q := x[i-1] >> y
-		r := x[i-1] << (Bits - y)
-		// store quotient, propagate remainder
-		quotient[i-1] = q + remainder
-		remainder = r
+		q_ := x[i-1] >> y
+		r_ := x[i-1] << (Bits - y)
+		// store quotient with lower remainder
+		q[i-1] = q_ | r
+		// forward current remainder, preshifted
+		r = r_
 	}
 
 	return

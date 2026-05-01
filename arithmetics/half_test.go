@@ -7,12 +7,109 @@ import (
 	"fmt"
 	"math/big"
 	"math/bits"
+	"slices"
 	"testing"
 
+	"hegel.dev/go/hegel"
 	"pgregory.net/rapid"
 )
 
-func TestHalf_Rapid(t *testing.T) {
+func TestHalfHegel(t *testing.T) {
+	const Bits = bits.UintSize
+	t.Run("differential", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger())
+			y := hegel.Draw[uint](ht, hegel.Integers[uint](0, Bits-1))
+			z := len(x)
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute with purple
+
+			q := make([]uint, z)
+			_ = Half(q, x, y)
+
+			// compute with math/big
+
+			x_ := toBigInt(x)
+			q_ := big.NewInt(0).Rsh(x_, y)
+
+			// compare
+
+			if toBigInt(q).Cmp(q_) != 0 {
+				ht.Fatalf("q = %X, q_ = %X", q, q_)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("accumulate", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelLongInteger())
+			y := hegel.Draw[uint](ht, hegel.Integers[uint](0, Bits-1))
+			z := len(x)
+			ht.Logf("x = %X, y = %X", x, y)
+
+			// compute result
+
+			q1 := make([]uint, z)
+			r1 := Half(q1, x, y)
+
+			// accumulate result
+
+			q2 := make([]uint, z)
+			copy(q2, x)
+			r2 := Half(q2, q2, y)
+
+			// compare
+
+			if !slices.Equal(q1, q2) {
+				ht.Fatalf("q1 = %X, q2 = %X", q1, q2)
+			}
+			if r1 != r2 {
+				ht.Fatalf("r1 = %d, r2 = %d", r1, r2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+	t.Run("short-result", func(t *testing.T) {
+		hegel.Test(t, func(ht *hegel.T) {
+
+			// generate samples
+
+			x := hegel.Draw[[]uint](ht, hegelNonemptyLongInteger())
+			y := hegel.Draw[uint](ht, hegel.Integers[uint](0, Bits-1))
+			// full size
+			fz := len(x)
+			// short size
+			sz := hegel.Draw(ht, hegel.Integers[int](0, fz-1))
+			ht.Logf("x = %X, y = %X, sz = %d", x, y, sz)
+
+			// full result
+
+			q1 := make([]uint, fz)
+			_ = Half(q1, x, y)
+
+			// short result
+
+			q2 := make([]uint, sz)
+			_ = Half(q2, x, y)
+
+			// compare
+
+			if !slices.Equal(q1[:sz], q2) {
+				ht.Fatalf("q1 = %X, q2 = %X", q1, q2)
+			}
+
+		}, hegel.WithTestCases(hegelCases))
+	})
+}
+
+func TestHalfRapid(t *testing.T) {
 	const Bits = bits.UintSize
 	t.Run("differential", func(t *testing.T) {
 		rapid.Check(t, func(t *rapid.T) {
